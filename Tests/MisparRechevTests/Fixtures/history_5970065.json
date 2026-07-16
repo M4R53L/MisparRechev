@@ -1,0 +1,32 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "56063a99-8a3e-4ff4-912e-5966c0279bad",
+    "fields": [
+      { "id": "mispar_rechev", "type": "numeric" },
+      { "id": "mispar_manoa", "type": "text" },
+      { "id": "kilometer_test_aharon", "type": "numeric" },
+      { "id": "shinui_mivne_ind", "type": "numeric" },
+      { "id": "gapam_ind", "type": "numeric" },
+      { "id": "shnui_zeva_ind", "type": "numeric" },
+      { "id": "shinui_zmig_ind", "type": "numeric" },
+      { "id": "rishum_rishon_dt", "type": "text" },
+      { "id": "mkoriut_nm", "type": "text" }
+    ],
+    "records": [
+      {
+        "mispar_rechev": 3256880,
+        "mispar_manoa": "CZE 289985",
+        "kilometer_test_aharon": 159816,
+        "shinui_mivne_ind": 1,
+        "gapam_ind": 0,
+        "shnui_zeva_ind": 0,
+        "shinui_zmig_ind": 1,
+        "rishum_rishon_dt": "2017-03-16 00:00:00",
+        "mkoriut_nm": ""
+      }
+    ],
+    "total": 1
+  }
+}

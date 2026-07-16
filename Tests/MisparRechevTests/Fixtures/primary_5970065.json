@@ -1,0 +1,46 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "053cea08-09bc-40ec-8f7a-156f0677aff3",
+    "fields": [
+      { "id": "mispar_rechev", "type": "numeric" },
+      { "id": "tozeret_nm", "type": "text" },
+      { "id": "kinuy_mishari", "type": "text" },
+      { "id": "shnat_yitzur", "type": "numeric" },
+      { "id": "tzeva_rechev", "type": "text" },
+      { "id": "sug_delek_nm", "type": "text" },
+      { "id": "kvutzat_zihum", "type": "numeric" },
+      { "id": "tokef_dt", "type": "text" },
+      { "id": "baalut", "type": "text" }
+    ],
+    "records": [
+      {
+        "mispar_rechev": 5970065,
+        "tozeret_cd": 588,
+        "sug_degem": "P",
+        "tozeret_nm": "מזדה יפן",
+        "degem_cd": 12,
+        "degem_nm": "NC18F",
+        "ramat_gimur": "S",
+        "ramat_eivzur_betihuty": null,
+        "kvutzat_zihum": 15,
+        "shnat_yitzur": 2008,
+        "degem_manoa": "LF",
+        "mivchan_acharon_dt": "2026-05-24",
+        "tokef_dt": "2027-05-24",
+        "baalut": "פרטי",
+        "misgeret": "JMZNC18F6-80153489",
+        "tzeva_cd": 20,
+        "tzeva_rechev": "אפור",
+        "zmig_kidmi": "205/45R17",
+        "zmig_ahori": "205/45R17",
+        "sug_delek_nm": "בנזין",
+        "horaat_rishum": null,
+        "moed_aliya_lakvish": "2008-5",
+        "kinuy_mishari": "MX 5"
+      }
+    ],
+    "total": 1
+  }
+}

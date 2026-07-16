@@ -1,0 +1,19 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "bb2355dc-9ec7-4f06-9c3f-3344672171da",
+    "fields": [
+      { "id": "_id", "type": "int" },
+      { "id": "mispar_rechev", "type": "numeric" },
+      { "id": "baalut_dt", "type": "numeric" },
+      { "id": "baalut", "type": "text" }
+    ],
+    "records": [
+      { "_id": 1, "mispar_rechev": 3256880, "baalut_dt": 201703, "baalut": "פרטי" },
+      { "_id": 2, "mispar_rechev": 3256880, "baalut_dt": 202105, "baalut": "סוחר" },
+      { "_id": 3, "mispar_rechev": 3256880, "baalut_dt": 202106, "baalut": "פרטי" }
+    ],
+    "total": 3
+  }
+}

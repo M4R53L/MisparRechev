@@ -1,0 +1,36 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "053cea08-09bc-40ec-8f7a-156f0677aff3",
+    "records": [
+      {
+        "_id": 2856528,
+        "mispar_rechev": 77720101,
+        "tozeret_cd": 1207,
+        "sug_degem": "P",
+        "tozeret_nm": "מרצדס בנץ ד.אפ",
+        "degem_cd": 2,
+        "degem_nm": "205.053",
+        "ramat_gimur": "ULT HARMONY",
+        "ramat_eivzur_betihuty": 2,
+        "kvutzat_zihum": 2,
+        "shnat_yitzur": 2020,
+        "degem_manoa": "M274",
+        "mivchan_acharon_dt": "2026-07-13",
+        "tokef_dt": "2027-07-06",
+        "baalut": "פרטי",
+        "misgeret": "WDD2050531R557774",
+        "tzeva_cd": 10,
+        "tzeva_rechev": "שחור",
+        "zmig_kidmi": "225/45R18",
+        "zmig_ahori": "245/40R18",
+        "sug_delek_nm": "חשמל/בנזין",
+        "horaat_rishum": 190476,
+        "moed_aliya_lakvish": "2020-7",
+        "kinuy_mishari": "C300E"
+      }
+    ],
+    "total": 1
+  }
+}

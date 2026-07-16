@@ -1,0 +1,75 @@
+/* Localizable.strings (Hebrew) — מספר רכב
+ *
+ * v1 uses inline Hebrew literals inside the SwiftUI views for speed, but this
+ * file provides the canonical keys so future localization (English) is trivial.
+ * Add `"key" = "value";` pairs here as views migrate to `Text(LocalizedStringKey)`.
+ */
+
+/* App */
+"app.name" = "מספר רכב";
+"app.subtitle" = "בדיקת פרטי רכב לפי מספר רישוי ממאגרי משרד התחבורה";
+
+/* Search */
+"search.plateLabel" = "מספר רישוי";
+"search.button" = "חיפוש";
+"search.recentTitle" = "חיפושים אחרונים";
+"search.clearHistory" = "נקה היסטוריה";
+"search.delete" = "מחק";
+
+/* Loading */
+"loading.title" = "מחפש רכב…";
+"loading.subtitle" = "מושך נתונים ממאגרי משרד התחבורה";
+
+/* Result sections */
+"section.basic" = "פרטים בסיסיים";
+"section.technical" = "מפרט טכני";
+"section.licensing" = "רישוי ובדיקות";
+"section.history" = "היסטוריה ובעלות";
+
+/* Fields */
+"field.manufacturer" = "יצרן";
+"field.model" = "דגם";
+"field.year" = "שנת ייצור";
+"field.color" = "צבע";
+"field.fuel" = "סוג דלק";
+"field.engineVolume" = "נפח מנוע";
+"field.totalWeight" = "משקל כולל";
+"field.ownWeight" = "משקל עצמי";
+"field.pollution" = "קבוצת זיהום";
+"field.testValidity" = "תוקף טסט";
+"field.licenseValidity" = "תוקף רישיון";
+"field.onRoadSince" = "מועד עלייה לכביש";
+"field.lastTest" = "מבחן אחרון";
+"field.ownership" = "סוג בעלות";
+"field.ownerCount" = "מספר בעלים";
+"field.mileage" = "קילומטראז׳";
+"field.engineNumber" = "מספר מנוע";
+
+/* Status */
+"status.valid" = "בתוקף";
+"status.expiringSoon" = "עומד לפוג";
+"status.expired" = "פג תוקף";
+"status.unknown" = "לא ידוע";
+
+/* Errors */
+"error.notFound.headline" = "הרכב לא נמצא";
+"error.network.headline" = "אין חיבור לרשת";
+"error.invalidPlate.headline" = "מספר רישוי לא תקין";
+"error.server.headline" = "תקלה זמנית בשירות";
+"error.decoding.headline" = "שגיאת נתונים";
+"error.retry" = "נסה שוב";
+"error.newSearch" = "חיפוש חדש";
+
+/* Units */
+"unit.cc" = "סמ״ק";
+"unit.kg" = "ק״ג";
+"unit.km" = "ק״מ";
+
+/* Misc */
+"action.share" = "שיתוף";
+"mileage.notReported" = "קילומטראז׳ לא מדווח";
+"changes.reported" = "שינויים שדווחו";
+"change.structural" = "שינוי מבנה";
+"change.body" = "נזק גוף";
+"change.color" = "שינוי צבע";
+"change.tire" = "שינוי צמיג";
