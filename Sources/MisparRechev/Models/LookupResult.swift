@@ -8,4 +8,5 @@ struct LookupResult: Equatable {
     let mileage: VehicleHistory?
     let ownership: [OwnershipRecord]
     let recalls: [RecallRecord]
+    let prices: [NewCarPrice]
 }

@@ -7,6 +7,7 @@ struct ResultView: View {
     let mileage: VehicleHistory?
     let ownership: [OwnershipRecord]
     let recalls: [RecallRecord]
+    let prices: [NewCarPrice]
 
     var body: some View {
         ScrollView {
@@ -14,6 +15,9 @@ struct ResultView: View {
                 hero
                 if !recalls.isEmpty {
                     RecallWarningView(recalls: recalls)
+                }
+                if !prices.isEmpty {
+                    PriceView(prices: prices, vehicle: vehicle)
                 }
                 ownershipSection
                 licensingTests
@@ -266,6 +270,13 @@ struct ResultView: View {
             let what = [recall.category, recall.details].compactMap { $0 }.joined(separator: " — ")
             lines.append("ריקול פתוח: \(what.isEmpty ? "פרטים אצל היבואן" : what)")
         }
+        if prices.count == 1, let newPrice = prices.first?.mehir, newPrice > 0 {
+            lines.append("מחיר מחירון כחדש: \(PriceEstimator.formatted(newPrice))")
+            if let year = vehicle.shnat_yitzur,
+               let estimate = PriceEstimator.estimatedValue(newPrice: newPrice, productionYear: year) {
+                lines.append("שווי מוערך כיום: \(PriceEstimator.formatted(estimate)) (הערכה בלבד)")
+            }
+        }
         lines.append("— מקור: data.gov.il")
         return lines.joined(separator: "\n")
     }
@@ -281,7 +292,8 @@ struct ResultView: View {
             .init(mispar_rechev: 5970065, baalut_dt: 201905, baalut: "סוחר"),
             .init(mispar_rechev: 5970065, baalut_dt: 201906, baalut: "פרטי")
         ],
-        recalls: [.preview]
+        recalls: [.preview],
+        prices: [.preview]
     )
     .environment(\.layoutDirection, .rightToLeft)
     .environment(\.locale, Locale(identifier: "he_IL"))

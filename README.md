@@ -33,6 +33,7 @@ live from Israel's **free, public, no-API-key** open-data portal
 | Mileage + change flags (2017+) — queried with `filters` | `56063a99-8a3e-4ff4-912e-5966c0279bad` |
 | Ownership-transfer timeline (2017+) — queried with `q` | `bb2355dc-9ec7-4f06-9c3f-3344672171da` |
 | Open (unperformed) recalls — queried with `filters`, UPPERCASE field | `36bf1404-0be4-49d2-82dc-2f1ead4a8b93` |
+| New-car importer list prices (1996+) — joined on model codes | `39f455bf-6db0-4926-859d-017f34eacbcb` |
 
 The app tries the **primary** (active private/commercial) dataset first; on a
 not-found it queries the **fallback** datasets concurrently (public vehicles,
@@ -90,6 +91,17 @@ with a generous limit. Fields: `RECALL_ID`, `SUG_RECALL` (סוג ריקול),
 `SUG_TAKALA` (קטגוריה), `TEUR_TAKALA` (תיאור), `TAARICH_PTICHA`
 (תאריך פתיחה, `yyyy-MM-dd`). Updated daily.
 
+The **new-car price** resource (`39f455bf`, "יבואנים ומחירוני רכב חדש") holds
+the importer's official list price (`mehir`, ₪) for every marketed
+model/trim/year since 1996. It is joined to a vehicle on **four keys** —
+`tozeret_cd`, `degem_cd`, `sug_degem`, `shnat_yitzur` — which normally yields
+exactly one record (also `shem_yevuan`, the importer). Vehicles resolved from
+the fallback datasets (imports, motorcycles, heavy trucks) have no `degem_cd`,
+so they show no price. The app derives a **rough current-value estimate** from
+the new price (−15% first year, −10%/year after, floored at 5%) — clearly
+disclaimed, since the authoritative used-car guide (מחירון לוי יצחק) is
+proprietary with no public API; the app links out to it instead.
+
 ## Build & run
 
 This repo uses [XcodeGen](https://github.com/yonaskolb/XcodeGen) so the
@@ -139,7 +151,8 @@ across regenerations, add `DEVELOPMENT_TEAM: <your team id>` to the
   from the personal-import fallback dataset, showing the import badge.
 - `17070204` — a public bus (הייגר סין, 2025). Not in the primary dataset, so it
   exercises the **public-vehicles fallback** path.
-- `1234567` — טויוטה קורולה הייבריד (widely used example).
+- `1234567` — אלפא רומיאו 159, 2009 (was a Corolla in older docs; the plate was
+  re-registered). New-car list price resolves to ₪190,990.
 - `5569379` — קיה RIO 2012 with an **open recall** (as of 2026-07) — shows the
   red recall-warning card. The dataset refreshes daily, so the recall may
   eventually be performed and the card disappear.

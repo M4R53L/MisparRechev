@@ -1,0 +1,36 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "39f455bf-6db0-4926-859d-017f34eacbcb",
+    "fields": [
+      { "id": "_id", "type": "int" },
+      { "id": "semel_yevuan", "type": "numeric" },
+      { "id": "shem_yevuan", "type": "text" },
+      { "id": "sug_degem", "type": "text" },
+      { "id": "tozeret_cd", "type": "numeric" },
+      { "id": "tozeret_nm", "type": "text" },
+      { "id": "degem_cd", "type": "numeric" },
+      { "id": "degem_nm", "type": "text" },
+      { "id": "shnat_yitzur", "type": "numeric" },
+      { "id": "mehir", "type": "numeric" },
+      { "id": "kinuy_mishari", "type": "text" }
+    ],
+    "records": [
+      {
+        "_id": 64702,
+        "semel_yevuan": 161,
+        "shem_yevuan": "כלמוביל מרצדס",
+        "sug_degem": "P",
+        "tozeret_cd": 1207,
+        "tozeret_nm": "מרצדס בנץ ד.אפ",
+        "degem_cd": 2,
+        "degem_nm": "205.053",
+        "shnat_yitzur": 2020,
+        "mehir": 375900,
+        "kinuy_mishari": "C300E"
+      }
+    ],
+    "total": 1
+  }
+}

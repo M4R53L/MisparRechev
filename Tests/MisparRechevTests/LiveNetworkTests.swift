@@ -93,6 +93,23 @@ final class LiveNetworkTests: XCTestCase {
         }
     }
 
+    /// The new-car price join for 77720101 (C300E 2020, codes 1207/2/P/2020).
+    /// Don't hard-assert the amount — the dataset updates; assert identity only.
+    func testLiveNewCarPriceLookup() async throws {
+        let service = VehicleService()
+        do {
+            let result = try await service.lookup(plate: 77720101)
+            XCTAssertTrue(result.prices.allSatisfy {
+                $0.tozeret_cd == result.vehicle.tozeret_cd && $0.degem_cd == result.vehicle.degem_cd
+            })
+            print("✅ LIVE 77720101 prices: \(result.prices.compactMap { $0.mehir })")
+        } catch let error as VehicleError {
+            try Self.handle(error)
+        } catch {
+            throw error
+        }
+    }
+
     /// Plate 5569379 had an open recall when this test was written. The recall
     /// dataset refreshes daily and the recall may get performed/closed, so only
     /// assert that whatever comes back belongs to the plate.

@@ -23,11 +23,16 @@ final class VehicleService {
         async let recallsTask = fetchRecalls(plate: plate)
 
         let vehicle = try await vehicleTask
+        // The price join needs the vehicle's model codes, so it starts after
+        // the vehicle arrives — overlapping with the remaining awaits.
+        async let pricesTask = fetchPrices(for: vehicle)
         let mileage = await mileageTask
         let ownership = await ownershipTask
         let recalls = await recallsTask
+        let prices = await pricesTask
         return LookupResult(vehicle: vehicle, mileage: mileage,
-                            ownership: ownership, recalls: recalls)
+                            ownership: ownership, recalls: recalls,
+                            prices: prices)
     }
 
     // MARK: - Vehicle (primary, with public fallback)
@@ -102,6 +107,23 @@ final class VehicleService {
         return records
             .filter { $0.MISPAR_RECHEV == plate }
             .sorted { ($0.TAARICH_PTICHA ?? "") > ($1.TAARICH_PTICHA ?? "") }
+    }
+
+    // MARK: - New-car list price (optional)
+
+    /// Returns the importer list-price record(s) for the vehicle's exact
+    /// model/trim/year — normally one. Empty when the vehicle lacks the model
+    /// codes (fallback-dataset vehicles) or the price resource misses it.
+    private func fetchPrices(for vehicle: Vehicle) async -> [NewCarPrice] {
+        guard let tozeretCd = vehicle.tozeret_cd,
+              let degemCd = vehicle.degem_cd,
+              let sugDegem = vehicle.sug_degem,
+              let year = vehicle.shnat_yitzur else { return [] }
+        let url = DataGovEndpoint.priceSearchURL(
+            tozeretCd: tozeretCd, degemCd: degemCd, sugDegem: sugDegem, year: year
+        )
+        guard let records = try? await fetchRecords(NewCarPrice.self, url: url) else { return [] }
+        return records.filter { $0.tozeret_cd == tozeretCd && $0.degem_cd == degemCd }
     }
 
     // MARK: - Generic CKAN request helpers

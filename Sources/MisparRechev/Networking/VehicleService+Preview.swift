@@ -5,6 +5,8 @@ import Foundation
 extension Vehicle {
     static let preview = Vehicle(
         mispar_rechev: 5970065,
+        tozeret_cd: 588,
+        degem_cd: 12,
         tozeret_nm: "מזדה יפן",
         kinuy_mishari: "MX 5",
         sug_degem: "P",
@@ -34,6 +36,19 @@ extension Vehicle {
         sug_yevu: nil,
         degem_manoa: nil,
         mispar_manoa: nil
+    )
+}
+
+extension NewCarPrice {
+    /// Real list-price record for plate `5970065` (מזדה MX-5, 2008) —
+    /// matches `Vehicle.preview`.
+    static let preview = NewCarPrice(
+        mehir: 184000,
+        shem_yevuan: "דלק מוטורס בע\"מ",
+        kinuy_mishari: "MX 5",
+        shnat_yitzur: 2008,
+        tozeret_cd: 588,
+        degem_cd: 12
     )
 }
 

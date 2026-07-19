@@ -62,6 +62,27 @@ enum DataGovEndpoint {
         return components.url!
     }
 
+    /// יבואנים ומחירוני רכב חדש — importer list prices for new cars
+    /// (1996–present). Joined on (tozeret_cd, degem_cd, sug_degem,
+    /// shnat_yitzur), which normally yields exactly one record. Vehicles from
+    /// the fallback datasets lack `degem_cd`, so they have no price.
+    static let priceResourceID = "39f455bf-6db0-4926-859d-017f34eacbcb"
+
+    /// Builds a `datastore_search` URL for the new-car price resource,
+    /// filtered on the four model-identity keys (values as JSON strings, per
+    /// the usual data.gov.il quirk).
+    static func priceSearchURL(tozeretCd: Int, degemCd: Int, sugDegem: String,
+                               year: Int, limit: Int = 8) -> URL {
+        var components = URLComponents(url: base, resolvingAgainstBaseURL: false)!
+        let filters = #"{"tozeret_cd":"\#(tozeretCd)","degem_cd":"\#(degemCd)","sug_degem":"\#(sugDegem)","shnat_yitzur":"\#(year)"}"#
+        components.queryItems = [
+            URLQueryItem(name: "resource_id", value: priceResourceID),
+            URLQueryItem(name: "filters", value: filters),
+            URLQueryItem(name: "limit", value: String(limit))
+        ]
+        return components.url!
+    }
+
     /// Builds a `datastore_search` URL for the recall resource, whose filter
     /// field is UPPERCASE `MISPAR_RECHEV` (plate as a JSON string, as always).
     static func recallSearchURL(plate: Int, limit: Int = 32) -> URL {

@@ -9,6 +9,11 @@ import Foundation
 struct Vehicle: Decodable, Identifiable, Equatable {
     /// מספר רישוי — the license-plate number (primary key).
     let mispar_rechev: Int
+    /// קוד תוצר — joins to the new-car price resource (`mehir_yevuan`).
+    let tozeret_cd: Int?
+    /// קוד דגם — joins to the new-car price resource. Missing in the
+    /// personal-import/motorcycle/heavy-truck fallback datasets.
+    let degem_cd: Int?
     /// יצרן (manufacturer, e.g. "טויוטה", "מזדה יפן").
     let tozeret_nm: String?
     /// כינוי מסחרי / דגם מסחרי (e.g. "קורולה הייבריד").

@@ -102,6 +102,10 @@ final class VehicleDecodingTests: XCTestCase {
         XCTAssertEqual(vehicle.shnat_yitzur, 2020)
         XCTAssertEqual(vehicle.ramat_eivzur_betihuty, 2, "safety level is an integer")
         XCTAssertEqual(vehicle.kvutzat_zihum, 2)
+        // Model-identity codes used for the new-car price join.
+        XCTAssertEqual(vehicle.tozeret_cd, 1207)
+        XCTAssertEqual(vehicle.degem_cd, 2)
+        XCTAssertEqual(vehicle.sug_degem, "P")
         XCTAssertEqual(vehicle.sug_delek_nm, "חשמל/בנזין")
         XCTAssertEqual(vehicle.tokef_dt, "2027-07-06")
         XCTAssertEqual(vehicle.baalut, "פרטי")
@@ -187,6 +191,35 @@ final class VehicleDecodingTests: XCTestCase {
         let limit = comps.queryItems?.first { $0.name == "limit" }?.value
         XCTAssertEqual(resource, DataGovEndpoint.recallResourceID)
         XCTAssertEqual(filters, #"{"MISPAR_RECHEV":"5569379"}"#)
+        XCTAssertNotEqual(limit, "1")
+    }
+
+    // MARK: - New-car list price
+
+    func testDecodesNewCarPriceFromFixture() throws {
+        let data = try fixture("price_77720101")
+        let response = try JSONDecoder().decode(DataGovResponse<NewCarPrice>.self, from: data)
+
+        XCTAssertTrue(response.success)
+        let price = try XCTUnwrap(response.result?.records?.first)
+        XCTAssertEqual(price.mehir, 375900)
+        XCTAssertEqual(price.importer, "כלמוביל מרצדס")
+        XCTAssertEqual(price.tozeret_cd, 1207)
+        XCTAssertEqual(price.degem_cd, 2)
+        XCTAssertEqual(price.shnat_yitzur, 2020)
+    }
+
+    func testPriceEndpointFiltersOnFourKeys() throws {
+        let url = DataGovEndpoint.priceSearchURL(
+            tozeretCd: 1207, degemCd: 2, sugDegem: "P", year: 2020
+        )
+        let comps = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        let resource = comps.queryItems?.first { $0.name == "resource_id" }?.value
+        let filters = comps.queryItems?.first { $0.name == "filters" }?.value
+        let limit = comps.queryItems?.first { $0.name == "limit" }?.value
+        XCTAssertEqual(resource, DataGovEndpoint.priceResourceID)
+        XCTAssertEqual(filters,
+                       #"{"tozeret_cd":"1207","degem_cd":"2","sug_degem":"P","shnat_yitzur":"2020"}"#)
         XCTAssertNotEqual(limit, "1")
     }
 
