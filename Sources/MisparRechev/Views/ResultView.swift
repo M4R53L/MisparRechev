@@ -11,10 +11,10 @@ struct ResultView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 hero
+                ownershipSection
+                licensingTests
                 basicInfo
                 technicalInfo
-                licensingTests
-                ownershipSection
                 footerActions
             }
             .padding(.horizontal, Theme.Spacing.l)
