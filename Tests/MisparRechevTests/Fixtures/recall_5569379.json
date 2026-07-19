@@ -1,0 +1,28 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "36bf1404-0be4-49d2-82dc-2f1ead4a8b93",
+    "fields": [
+      { "id": "_id", "type": "int" },
+      { "id": "MISPAR_RECHEV", "type": "numeric" },
+      { "id": "RECALL_ID", "type": "numeric" },
+      { "id": "SUG_RECALL", "type": "text" },
+      { "id": "SUG_TAKALA", "type": "text" },
+      { "id": "TEUR_TAKALA", "type": "text" },
+      { "id": "TAARICH_PTICHA", "type": "text" }
+    ],
+    "records": [
+      {
+        "_id": 50005,
+        "MISPAR_RECHEV": 5569379,
+        "RECALL_ID": 15947,
+        "SUG_RECALL": "תקלה סידרתית בטיחותית",
+        "SUG_TAKALA": "מנוע ומערכותיו",
+        "TEUR_TAKALA": "במקרים מסוימים תתכן תקלה ביחידת הבקרה (HECU) בתא המנוע",
+        "TAARICH_PTICHA": "2025-03-12"
+      }
+    ],
+    "total": 1
+  }
+}

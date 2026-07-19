@@ -93,6 +93,23 @@ final class LiveNetworkTests: XCTestCase {
         }
     }
 
+    /// Plate 5569379 had an open recall when this test was written. The recall
+    /// dataset refreshes daily and the recall may get performed/closed, so only
+    /// assert that whatever comes back belongs to the plate.
+    func testLiveRecallLookup() async throws {
+        let service = VehicleService()
+        do {
+            let result = try await service.lookup(plate: 5569379)
+            XCTAssertEqual(result.vehicle.mispar_rechev, 5569379)
+            XCTAssertTrue(result.recalls.allSatisfy { $0.MISPAR_RECHEV == 5569379 })
+            print("✅ LIVE 5569379 recalls: \(result.recalls.count) | \(result.recalls.compactMap { $0.category })")
+        } catch let error as VehicleError {
+            try Self.handle(error)
+        } catch {
+            throw error
+        }
+    }
+
     /// A 9-digit "plate" matches nothing in any dataset → `.notFound`.
     func testLiveLookupNotFound() async throws {
         let service = VehicleService()
@@ -119,9 +136,9 @@ final class LiveNetworkTests: XCTestCase {
             try await Task.sleep(nanoseconds: 100_000_000)
         }
         switch vm.state {
-        case .loaded(let vehicle, let mileage, let ownership):
-            XCTAssertEqual(vehicle.mispar_rechev, 5970065)
-            print("✅ VM end-to-end OK: \(vehicle.tozeret_nm ?? "?") | mileage=\(mileage != nil) ownership=\(ownership.count)")
+        case .loaded(let result):
+            XCTAssertEqual(result.vehicle.mispar_rechev, 5970065)
+            print("✅ VM end-to-end OK: \(result.vehicle.tozeret_nm ?? "?") | mileage=\(result.mileage != nil) ownership=\(result.ownership.count)")
         case .error(let error):
             try Self.handle(error)
         case .loading:
@@ -139,10 +156,11 @@ final class LiveNetworkTests: XCTestCase {
         for _ in 0..<150 where Self.isLoadingState(vm.state) {
             try await Task.sleep(nanoseconds: 100_000_000)
         }
-        guard case .loaded(let v1, _, _) = vm.state else {
+        guard case .loaded(let first) = vm.state else {
             if case .error(let e) = vm.state { try Self.handle(e) }
             XCTFail("First lookup failed: \(vm.state)"); return
         }
+        let v1 = first.vehicle
         XCTAssertEqual(v1.mispar_rechev, 5970065)
 
         vm.reset()
@@ -151,10 +169,10 @@ final class LiveNetworkTests: XCTestCase {
             try await Task.sleep(nanoseconds: 100_000_000)
         }
         switch vm.state {
-        case .loaded(let v2, let mileage, let ownership):
-            XCTAssertEqual(v2.mispar_rechev, 3256880)
-            XCTAssertFalse(ownership.isEmpty)
-            print("✅ Two-lookup OK: 1st=\(v1.mispar_rechev), 2nd=\(v2.mispar_rechev) ownership=\(ownership.count) km=\(mileage?.mileageKm ?? "nil")")
+        case .loaded(let second):
+            XCTAssertEqual(second.vehicle.mispar_rechev, 3256880)
+            XCTAssertFalse(second.ownership.isEmpty)
+            print("✅ Two-lookup OK: 1st=\(v1.mispar_rechev), 2nd=\(second.vehicle.mispar_rechev) ownership=\(second.ownership.count) km=\(second.mileage?.mileageKm ?? "nil")")
         case .error(let error):
             try Self.handle(error)
         default:

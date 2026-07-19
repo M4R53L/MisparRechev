@@ -6,11 +6,15 @@ struct ResultView: View {
     let vehicle: Vehicle
     let mileage: VehicleHistory?
     let ownership: [OwnershipRecord]
+    let recalls: [RecallRecord]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 hero
+                if !recalls.isEmpty {
+                    RecallWarningView(recalls: recalls)
+                }
                 ownershipSection
                 licensingTests
                 basicInfo
@@ -258,6 +262,10 @@ struct ResultView: View {
             if let src = m.ownershipSource { lines.append("מקור בעלות: \(src)") }
             if !m.changeLabels.isEmpty     { lines.append("שינויים: \(m.changeLabels.joined(separator: ", "))") }
         }
+        for recall in recalls {
+            let what = [recall.category, recall.details].compactMap { $0 }.joined(separator: " — ")
+            lines.append("ריקול פתוח: \(what.isEmpty ? "פרטים אצל היבואן" : what)")
+        }
         lines.append("— מקור: data.gov.il")
         return lines.joined(separator: "\n")
     }
@@ -272,7 +280,8 @@ struct ResultView: View {
             .init(mispar_rechev: 5970065, baalut_dt: 200806, baalut: "פרטי"),
             .init(mispar_rechev: 5970065, baalut_dt: 201905, baalut: "סוחר"),
             .init(mispar_rechev: 5970065, baalut_dt: 201906, baalut: "פרטי")
-        ]
+        ],
+        recalls: [.preview]
     )
     .environment(\.layoutDirection, .rightToLeft)
     .environment(\.locale, Locale(identifier: "he_IL"))

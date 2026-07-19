@@ -41,6 +41,12 @@ enum DataGovEndpoint {
     /// is full-text indexed only — it MUST be queried with `q`, not `filters`.
     static let ownershipResourceID = "bb2355dc-9ec7-4f06-9c3f-3344672171da"
 
+    /// כלי רכב שלא ביצעו ריקול (קריאת שירות) — open, unperformed recalls.
+    /// Filter-indexed, but by UPPERCASE `MISPAR_RECHEV` (unlike every other
+    /// resource); plate still sent as a JSON string. A plate can have several
+    /// open recalls, so query with a generous limit (not 1). Updated daily.
+    static let recallResourceID = "36bf1404-0be4-49d2-82dc-2f1ead4a8b93"
+
     /// Builds a `datastore_search` URL filtered by an exact `mispar_rechev`.
     ///
     /// The plate is sent as a JSON **string** even though the field is numeric,
@@ -52,6 +58,19 @@ enum DataGovEndpoint {
             URLQueryItem(name: "resource_id", value: resourceID),
             URLQueryItem(name: "filters", value: filters),
             URLQueryItem(name: "limit", value: "1")
+        ]
+        return components.url!
+    }
+
+    /// Builds a `datastore_search` URL for the recall resource, whose filter
+    /// field is UPPERCASE `MISPAR_RECHEV` (plate as a JSON string, as always).
+    static func recallSearchURL(plate: Int, limit: Int = 32) -> URL {
+        var components = URLComponents(url: base, resolvingAgainstBaseURL: false)!
+        let filters = #"{"MISPAR_RECHEV":"\#(plate)"}"#
+        components.queryItems = [
+            URLQueryItem(name: "resource_id", value: recallResourceID),
+            URLQueryItem(name: "filters", value: filters),
+            URLQueryItem(name: "limit", value: String(limit))
         ]
         return components.url!
     }

@@ -9,6 +9,8 @@ struct PlateField: View {
     @Binding var text: String
     /// Triggered when the user taps the clear (×) button.
     var onClear: (() -> Void)? = nil
+    /// When set, shows a camera button that triggers plate scanning.
+    var onScan: (() -> Void)? = nil
 
     @FocusState private var isFocused: Bool
 
@@ -28,6 +30,12 @@ struct PlateField: View {
                     clearButton
                         .padding(.top, 6)
                         .padding(.trailing, 6)
+                }
+                if let onScan {
+                    scanButton(onScan)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .padding(.top, 6)
+                        .padding(.leading, 6)
                 }
             }
         }
@@ -80,6 +88,17 @@ struct PlateField: View {
                 .padding(6)
         }
         .accessibilityLabel("נקה מספר רישוי")
+        .buttonStyle(.plain)
+    }
+
+    private func scanButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "camera.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Theme.Colors.textOnPlate)
+                .padding(6)
+        }
+        .accessibilityLabel("סריקת לוחית רישוי במצלמה")
         .buttonStyle(.plain)
     }
 }

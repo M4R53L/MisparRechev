@@ -159,6 +159,37 @@ final class VehicleDecodingTests: XCTestCase {
         XCTAssertEqual(vehicle.mishkal_kolel, 0)
     }
 
+    // MARK: - Open recalls
+
+    func testDecodesRecallFromFixture() throws {
+        let data = try fixture("recall_5569379")
+        let response = try JSONDecoder().decode(DataGovResponse<RecallRecord>.self, from: data)
+
+        XCTAssertTrue(response.success)
+        let recall = try XCTUnwrap(response.result?.records?.first)
+        XCTAssertEqual(recall.MISPAR_RECHEV, 5569379)
+        XCTAssertEqual(recall.RECALL_ID, 15947)
+        XCTAssertEqual(recall.recallType, "תקלה סידרתית בטיחותית")
+        XCTAssertEqual(recall.category, "מנוע ומערכותיו")
+        XCTAssertEqual(recall.TAARICH_PTICHA, "2025-03-12")
+        // The opening date parses with the app's existing date formats.
+        XCTAssertNotNil(SearchViewModel.parse("2025-03-12"))
+    }
+
+    /// The recall resource is filter-indexed by UPPERCASE `MISPAR_RECHEV` (a
+    /// verified quirk), and a plate can have several recalls → limit must not
+    /// be 1.
+    func testRecallEndpointUsesUppercaseFilterField() throws {
+        let url = DataGovEndpoint.recallSearchURL(plate: 5569379)
+        let comps = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        let resource = comps.queryItems?.first { $0.name == "resource_id" }?.value
+        let filters = comps.queryItems?.first { $0.name == "filters" }?.value
+        let limit = comps.queryItems?.first { $0.name == "limit" }?.value
+        XCTAssertEqual(resource, DataGovEndpoint.recallResourceID)
+        XCTAssertEqual(filters, #"{"MISPAR_RECHEV":"5569379"}"#)
+        XCTAssertNotEqual(limit, "1")
+    }
+
     // MARK: - Not-found
 
     func testEmptyRecordsYieldNoRecord() throws {

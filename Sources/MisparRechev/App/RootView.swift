@@ -16,9 +16,10 @@ struct RootView: View {
                 SearchView(viewModel: viewModel)
             case .loading:
                 LoadingView()
-            case .loaded(let vehicle, let mileage, let ownership):
-                ResultView(viewModel: viewModel, vehicle: vehicle,
-                           mileage: mileage, ownership: ownership)
+            case .loaded(let result):
+                ResultView(viewModel: viewModel, vehicle: result.vehicle,
+                           mileage: result.mileage, ownership: result.ownership,
+                           recalls: result.recalls)
             case .error(let error):
                 ErrorView(viewModel: viewModel, error: error)
             }

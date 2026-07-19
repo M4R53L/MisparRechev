@@ -14,18 +14,20 @@ final class VehicleService {
     }
 
     /// Looks up a vehicle by plate. Throws `VehicleError`.
-    func lookup(plate: Int) async throws
-        -> (vehicle: Vehicle, mileage: VehicleHistory?, ownership: [OwnershipRecord]) {
+    func lookup(plate: Int) async throws -> LookupResult {
         try Task.checkCancellation()
 
         async let vehicleTask = fetchVehicle(plate: plate)
         async let mileageTask = fetchMileage(plate: plate)
         async let ownershipTask = fetchOwnership(plate: plate)
+        async let recallsTask = fetchRecalls(plate: plate)
 
         let vehicle = try await vehicleTask
         let mileage = await mileageTask
         let ownership = await ownershipTask
-        return (vehicle, mileage, ownership)
+        let recalls = await recallsTask
+        return LookupResult(vehicle: vehicle, mileage: mileage,
+                            ownership: ownership, recalls: recalls)
     }
 
     // MARK: - Vehicle (primary, with public fallback)
@@ -87,6 +89,19 @@ final class VehicleService {
         return records
             .filter { $0.mispar_rechev == plate }
             .sorted { ($0.baalut_dt ?? 0) < ($1.baalut_dt ?? 0) }
+    }
+
+    // MARK: - Open recalls (optional)
+
+    /// Returns open recalls for the plate, newest first. Keeps only records
+    /// whose `MISPAR_RECHEV` exactly matches (defensive), sorted by opening
+    /// date descending (safe as a string sort for `yyyy-MM-dd`).
+    private func fetchRecalls(plate: Int) async -> [RecallRecord] {
+        let url = DataGovEndpoint.recallSearchURL(plate: plate)
+        guard let records = try? await fetchRecords(RecallRecord.self, url: url) else { return [] }
+        return records
+            .filter { $0.MISPAR_RECHEV == plate }
+            .sorted { ($0.TAARICH_PTICHA ?? "") > ($1.TAARICH_PTICHA ?? "") }
     }
 
     // MARK: - Generic CKAN request helpers

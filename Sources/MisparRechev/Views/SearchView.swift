@@ -1,8 +1,16 @@
 import SwiftUI
+import VisionKit
 
 /// The hero / empty state. Title, plate field, search button, and a recent-history list.
 struct SearchView: View {
     @Bindable var viewModel: SearchViewModel
+    @State private var isShowingScanner = false
+
+    /// Camera scanning needs a device with a camera and an A12+ Neural Engine
+    /// (every iOS 17 device qualifies); false on the simulator, hiding the button.
+    private var canScan: Bool {
+        DataScannerViewController.isSupported && DataScannerViewController.isAvailable
+    }
 
     var body: some View {
         ScrollView {
@@ -17,6 +25,13 @@ struct SearchView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.Colors.background.ignoresSafeArea())
+        .sheet(isPresented: $isShowingScanner) {
+            PlateScannerSheet { plate in
+                isShowingScanner = false
+                viewModel.plateInput = plate // didSet re-sanitizes to digits
+                viewModel.search()
+            }
+        }
     }
 
     // MARK: - Header
@@ -44,7 +59,8 @@ struct SearchView: View {
 
     private var plateAndButton: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-            PlateField(text: $viewModel.plateInput)
+            PlateField(text: $viewModel.plateInput,
+                       onScan: canScan ? { isShowingScanner = true } : nil)
 
             Button {
                 viewModel.search()
@@ -96,9 +112,20 @@ struct SearchView: View {
                                 Image(systemName: "clock.arrow.circlepath")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundStyle(Theme.Colors.primary)
-                                Text(format(plate: entry.plate))
-                                    .font(Theme.Typography.monoValue)
-                                    .foregroundStyle(Theme.Colors.textPrimary)
+                                if let title = entry.title {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(title)
+                                            .font(Theme.Typography.bodyBold)
+                                            .foregroundStyle(Theme.Colors.textPrimary)
+                                        Text(format(plate: entry.plate))
+                                            .font(Theme.Typography.monoValue)
+                                            .foregroundStyle(Theme.Colors.textSecondary)
+                                    }
+                                } else {
+                                    Text(format(plate: entry.plate))
+                                        .font(Theme.Typography.monoValue)
+                                        .foregroundStyle(Theme.Colors.textPrimary)
+                                }
                                 Spacer()
                                 Text(relativeTime(entry.timestamp))
                                     .font(Theme.Typography.caption)

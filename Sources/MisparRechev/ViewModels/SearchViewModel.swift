@@ -5,7 +5,7 @@ import SwiftUI
 enum LookupState: Equatable {
     case empty
     case loading
-    case loaded(Vehicle, VehicleHistory?, [OwnershipRecord])
+    case loaded(LookupResult)
     case error(VehicleError)
 }
 
@@ -71,8 +71,12 @@ final class SearchViewModel {
                 let result = try await self.service.lookup(plate: plate)
                 guard !Task.isCancelled else { return }
                 await MainActor.run {
-                    self.state = .loaded(result.vehicle, result.mileage, result.ownership)
-                    self.history = self.history.recording(plate: plate)
+                    self.state = .loaded(result)
+                    self.history = self.history.recording(
+                        plate: plate,
+                        manufacturer: result.vehicle.manufacturer,
+                        model: result.vehicle.model,
+                        year: result.vehicle.year)
                     self.history.save(defaults: self.defaults)
                 }
             } catch let error as VehicleError {

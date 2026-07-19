@@ -17,6 +17,7 @@ settings:
     # Force right-to-left for consistent Hebrew layout (optional; system still
     # honours per-view layoutDirection). Comment out to follow device language.
     INFOPLIST_KEY_UIForceRTL: YES
+    INFOPLIST_KEY_NSCameraUsageDescription: "המצלמה משמשת לסריקת לוחית הרישוי כדי למלא את מספר הרכב אוטומטית"
 
 targets:
   MisparRechev:

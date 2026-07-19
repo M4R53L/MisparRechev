@@ -32,6 +32,7 @@ live from Israel's **free, public, no-API-key** open-data portal
 | Heavy trucks / no model code — fallback | `cd3acc5c-03c3-4c89-9c54-d40f93c0d790` |
 | Mileage + change flags (2017+) — queried with `filters` | `56063a99-8a3e-4ff4-912e-5966c0279bad` |
 | Ownership-transfer timeline (2017+) — queried with `q` | `bb2355dc-9ec7-4f06-9c3f-3344672171da` |
+| Open (unperformed) recalls — queried with `filters`, UPPERCASE field | `36bf1404-0be4-49d2-82dc-2f1ead4a8b93` |
 
 The app tries the **primary** (active private/commercial) dataset first; on a
 not-found it queries the **fallback** datasets concurrently (public vehicles,
@@ -79,6 +80,15 @@ the results client-side to the exact plate to avoid false positives.
 Both history datasets only cover private vehicles tracked since 2017, so many
 plates (especially older ones) have **no** history — the app silently hides
 that section. Example: `3256880` → פרטי (2017) → סוחר (2021) → פרטי (2021).
+
+The **recalls** resource (`36bf1404`, "כלי רכב שלא ביצעו ריקול") lists open
+recalls the vehicle has **not yet performed** — presence of a record means an
+open recall; absence means none (or already fixed). Unlike every other
+resource its filter field is **UPPERCASE**: `filters={"MISPAR_RECHEV":"..."}`
+(still a JSON string). A plate can have several records, so the app queries
+with a generous limit. Fields: `RECALL_ID`, `SUG_RECALL` (סוג ריקול),
+`SUG_TAKALA` (קטגוריה), `TEUR_TAKALA` (תיאור), `TAARICH_PTICHA`
+(תאריך פתיחה, `yyyy-MM-dd`). Updated daily.
 
 ## Build & run
 
@@ -130,6 +140,9 @@ across regenerations, add `DEVELOPMENT_TEAM: <your team id>` to the
 - `17070204` — a public bus (הייגר סין, 2025). Not in the primary dataset, so it
   exercises the **public-vehicles fallback** path.
 - `1234567` — טויוטה קורולה הייבריד (widely used example).
+- `5569379` — קיה RIO 2012 with an **open recall** (as of 2026-07) — shows the
+  red recall-warning card. The dataset refreshes daily, so the recall may
+  eventually be performed and the card disappear.
 - `0000000` — use to see the "not found" state.
 
 ## Run tests

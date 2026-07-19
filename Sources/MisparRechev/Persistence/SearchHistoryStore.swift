@@ -12,7 +12,19 @@ struct SearchHistoryStore: Codable, Equatable {
     struct Entry: Codable, Identifiable, Equatable, Hashable {
         let plate: Int
         let timestamp: Date
+        /// Vehicle display info captured on a successful lookup. Optional so
+        /// entries persisted by earlier app versions decode with `nil`s.
+        let manufacturer: String?
+        let model: String?
+        let year: String?
         var id: Int { plate }
+
+        /// Display title like "MX 5 • 2008"; `nil` when nothing beyond the
+        /// plate number is known (legacy entries).
+        var title: String? {
+            let parts = [model ?? manufacturer, year].compactMap { $0 }
+            return parts.isEmpty ? nil : parts.joined(separator: " • ")
+        }
     }
 
     private(set) var entries: [Entry] = []
@@ -35,11 +47,15 @@ struct SearchHistoryStore: Codable, Equatable {
     private enum CodingKeys: String, CodingKey { case entries }
 
     /// Record a lookup, de-duplicating by plate and keeping the most recent
-    /// timestamp. Returns a new store (value type).
-    func recording(plate: Int, at date: Date = .now) -> SearchHistoryStore {
+    /// timestamp (and vehicle info, when provided). Returns a new store
+    /// (value type). Re-recording a plate replaces its entry, so legacy
+    /// number-only entries upgrade in place.
+    func recording(plate: Int, manufacturer: String? = nil, model: String? = nil,
+                   year: String? = nil, at date: Date = .now) -> SearchHistoryStore {
         let filtered = entries.filter { $0.plate != plate }
         var updated = filtered
-        updated.insert(Entry(plate: plate, timestamp: date), at: 0)
+        updated.insert(Entry(plate: plate, timestamp: date, manufacturer: manufacturer,
+                             model: model, year: year), at: 0)
         if updated.count > Self.maxEntries {
             updated = Array(updated.prefix(Self.maxEntries))
         }

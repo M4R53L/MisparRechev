@@ -37,6 +37,18 @@ extension Vehicle {
     )
 }
 
+extension RecallRecord {
+    /// Real open-recall record for plate `5569379` (קיה RIO 2012).
+    static let preview = RecallRecord(
+        MISPAR_RECHEV: 5569379,
+        RECALL_ID: 15947,
+        SUG_RECALL: "תקלה סידרתית בטיחותית",
+        SUG_TAKALA: "מנוע ומערכותיו",
+        TEUR_TAKALA: "במקרים מסוימים תתכן תקלה ביחידת הבקרה (HECU) בתא המנוע",
+        TAARICH_PTICHA: "2025-03-12"
+    )
+}
+
 extension VehicleHistory {
     static let preview = VehicleHistory(
         mispar_rechev: 3256880,
