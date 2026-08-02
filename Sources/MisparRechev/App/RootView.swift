@@ -20,7 +20,9 @@ struct RootView: View {
                 ResultView(viewModel: viewModel, vehicle: result.vehicle,
                            spec: result.spec, mileage: result.mileage,
                            ownership: result.ownership, recalls: result.recalls,
-                           prices: result.prices, freshness: freshness)
+                           prices: result.prices,
+                           electricRangeKm: result.electricRangeKm,
+                           freshness: freshness)
             case .error(let error):
                 ErrorView(viewModel: viewModel, error: error)
             }

@@ -32,9 +32,14 @@ final class VehicleService {
         let recalls = await recallsTask
         let prices = await pricesTask
         let spec = await specTask
+        // WLTP range (EVs/plug-ins only) needs the spec's drive technology
+        // and horsepower, so it runs after the spec resolves; instant no-op
+        // for non-chargeable vehicles, optional like the other extras.
+        let electricRangeKm = await ElectricRange.fetch(vehicle: vehicle, spec: spec,
+                                                        session: session)
         return LookupResult(vehicle: vehicle, spec: spec, mileage: mileage,
                             ownership: ownership, recalls: recalls,
-                            prices: prices)
+                            prices: prices, electricRangeKm: electricRangeKm)
     }
 
     // MARK: - Vehicle (primary, with public fallback)

@@ -150,6 +150,7 @@ struct PDFReportView: View {
         compact([
             ("סוג דלק", vehicle.sug_delek_nm),
             ("הספק", spec?.horsepower.map { "\($0) כ״ס" }),
+            ("טווח חשמלי (WLTP)", result.electricRangeKm.map { "\($0) ק״מ" }),
             ("נפח מנוע", (vehicle.nefach_manoa ?? spec?.displacementCC).map { "\($0) סמ״ק" }),
             ("תיבת הילוכים", spec?.gearbox),
             ("הנעה", spec?.driveType),

@@ -12,4 +12,8 @@ struct LookupResult: Codable, Equatable {
     let ownership: [OwnershipRecord]
     let recalls: [RecallRecord]
     let prices: [NewCarPrice]
+    /// WLTP electric range (km) for EVs / plug-in hybrids, from the EEA's EU
+    /// registration data (see `ElectricRange`). Defaulted so pre-existing
+    /// call sites and stored snapshots keep working.
+    var electricRangeKm: Int? = nil
 }

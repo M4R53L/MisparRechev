@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 /// Where a shown result came from: a live fetch, or a stored offline snapshot
 /// (with the date it was saved). Drives the "מוצג מידע שמור" banner.
@@ -113,6 +114,7 @@ final class SearchViewModel {
                     if case .network = error,
                        let snap = self.snapshots.snapshot(for: plate) {
                         self.state = .loaded(snap.result, .snapshot(snap.savedAt))
+                        self.copyPlateToClipboard(plate)
                     } else if fromScan, case .network = error {
                         // The scan already did its job — the number is in the
                         // field. Land back on the search screen with a notice
@@ -136,6 +138,7 @@ final class SearchViewModel {
     @MainActor
     private func apply(_ result: LookupResult, for plate: Int) {
         state = .loaded(result, .live)
+        copyPlateToClipboard(plate)
         history = history.recording(
             plate: plate,
             manufacturer: result.vehicle.manufacturer,
@@ -144,6 +147,12 @@ final class SearchViewModel {
         history.save(defaults: defaults)
         snapshots = snapshots.saving(result, for: plate)
         snapshots.save()
+    }
+
+    /// Every successfully shown lookup puts the plate on the clipboard,
+    /// ready to paste elsewhere (typed searches and camera scans alike).
+    private func copyPlateToClipboard(_ plate: Int) {
+        UIPasteboard.general.string = String(plate)
     }
 
     /// Re-run a lookup for a plate tapped in history.
@@ -165,6 +174,7 @@ final class SearchViewModel {
         scanOfflineNotice = false
         plateInput = String(plate)
         state = .loaded(snap.result, .snapshot(snap.savedAt))
+        copyPlateToClipboard(plate)
 
         inflight = Task { [weak self] in
             guard let self else { return }
@@ -182,6 +192,14 @@ final class SearchViewModel {
         inflight?.cancel()
         scanOfflineNotice = false
         plateInput = ""
+        state = .empty
+    }
+
+    /// Back-navigation from the result screen: returns to the search screen
+    /// but keeps the plate in the field (unlike `reset()`, which clears it).
+    func goBack() {
+        inflight?.cancel()
+        scanOfflineNotice = false
         state = .empty
     }
 

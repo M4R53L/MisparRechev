@@ -70,6 +70,35 @@ The `filters` value is a URL-encoded JSON object; the plate is sent as a
 **string** even though `mispar_rechev` is numeric. The response shape is
 `{ success, result: { records: [ {...} ] } }`.
 
+### WLTP electric range — EEA (the one non-Israeli source)
+
+No data.gov.il resource publishes driving range, so for EVs and plug-in
+hybrids the app queries the **European Environment Agency**'s per-registration
+"CO2 emissions from new passenger cars" database via **DiscoData** — a free,
+key-less SQL-over-HTTPS JSON endpoint (same trust model as data.gov.il):
+
+```
+GET https://discodata.eea.europa.eu/sql
+    ?query=SELECT [Ep (KW)] AS ep, Zr AS zr, COUNT(*) AS n FROM ... &p=1&nrOfHits=200
+```
+
+Israeli vehicles are European type-approvals, so the EEA commercial name
+(`Cn`) matches `kinuy_mishari` directly ("MODEL 3", "ATTO 3"…). Verified
+quirks (all encoded in `Networking/ElectricRangeService.swift`):
+
+- The WLTP electric-range column is **`Zr`** (km), populated from ~2021.
+  Member states report it inconsistently, so the app takes the
+  **registration-count-weighted mode** — never MIN/MAX (typos abound).
+- BEVs filter `UPPER(Ft) = 'ELECTRIC'`; plug-in hybrids `UPPER(Fm) = 'P'`.
+- `Ep (KW)` disambiguates BEV trims sharing one `Cn` (≈ `koah_sus` × 0.7355);
+  for PHEVs it is combustion-engine-only power and is ignored.
+- Years 2010–2022: `[CO2Emission].[latest].[co2cars]` (filter `[Year]`);
+  2023+: per-year tables (`co2cars_2023Fv28`, `co2cars_2024Pv29`,
+  `co2cars_2025Pv31`) whose names embed data versions and change when the
+  EEA republishes — update `ElectricRange.tableName` when new years appear.
+  The DiscoData catalog is at `https://discodata.eea.europa.eu/md`
+  (needs a browser-like User-Agent).
+
 ### Field notes (verified)
 
 The **primary** resource returns (Hebrew): `mispar_rechev`, `tozeret_nm`

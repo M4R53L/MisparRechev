@@ -9,20 +9,54 @@ struct ResultView: View {
     let ownership: [OwnershipRecord]
     let recalls: [RecallRecord]
     let prices: [NewCarPrice]
+    let electricRangeKm: Int?
     let freshness: DataFreshness
 
     @State private var isShowingCompare = false
     @State private var pdfURL: URL?
+
+    /// Transient "plate copied to clipboard" toast, shown once per result.
+    @State private var showsCopiedNotice = false
 
     /// The full result rebuilt from this view's parts — used by the compare
     /// sheet and the PDF report.
     private var fullResult: LookupResult {
         LookupResult(vehicle: vehicle, spec: spec, mileage: mileage,
                      ownership: ownership, recalls: recalls,
-                     prices: prices)
+                     prices: prices, electricRangeKm: electricRangeKm)
     }
 
     var body: some View {
+        scrollContent
+            .overlay(alignment: .topLeading) { backButton }
+            .overlay(alignment: .bottom) {
+                if showsCopiedNotice {
+                    copiedNotice
+                        .padding(.bottom, Theme.Spacing.l)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .sheet(isPresented: $isShowingCompare) {
+                CompareFromResultSheet(
+                    currentPlate: vehicle.mispar_rechev,
+                    currentResult: fullResult,
+                    history: viewModel.history.entries
+                )
+            }
+            .task(id: vehicle.mispar_rechev) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    showsCopiedNotice = true
+                }
+                // Pre-generate the PDF report so the share button is instant.
+                pdfURL = try? PDFReportRenderer.render(result: fullResult)
+                try? await Task.sleep(for: .seconds(2.5))
+                withAnimation(.easeOut(duration: Theme.Motion.durationStandard)) {
+                    showsCopiedNotice = false
+                }
+            }
+    }
+
+    private var scrollContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 if case .snapshot(let savedAt) = freshness {
@@ -50,17 +84,47 @@ struct ResultView: View {
             .padding(.bottom, Theme.Spacing.xxl)
         }
         .background(Theme.Colors.background.ignoresSafeArea())
-        .sheet(isPresented: $isShowingCompare) {
-            CompareFromResultSheet(
-                currentPlate: vehicle.mispar_rechev,
-                currentResult: fullResult,
-                history: viewModel.history.entries
-            )
+    }
+
+    // MARK: - Back navigation (floating arrow)
+
+    /// Floating circular back button, pinned top-leading (top-right in RTL).
+    /// `chevron.backward` mirrors automatically with the layout direction.
+    /// Returns to the search screen keeping the plate in the field.
+    private var backButton: some View {
+        Button {
+            viewModel.goBack()
+        } label: {
+            Image(systemName: "chevron.backward")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Theme.Colors.primary)
+                .frame(width: 40, height: 40)
+                .background(.ultraThinMaterial, in: Circle())
+                .overlay(Circle().strokeBorder(Theme.Colors.divider, lineWidth: 0.5))
+                .cardShadow()
+                .contentShape(Circle())
         }
-        .task(id: vehicle.mispar_rechev) {
-            // Pre-generate the PDF report so the share button is instant.
-            pdfURL = try? PDFReportRenderer.render(result: fullResult)
+        .padding(.leading, Theme.Spacing.l)
+        .padding(.top, Theme.Spacing.s)
+        .accessibilityLabel("חזרה לחיפוש")
+    }
+
+    // MARK: - Copied-to-clipboard notice
+
+    private var copiedNotice: some View {
+        HStack(spacing: Theme.Spacing.s) {
+            Image(systemName: "doc.on.doc.fill")
+                .font(.system(size: 12, weight: .semibold))
+            Text("המספר הועתק ללוח")
+                .font(Theme.Typography.captionBold)
         }
+        .foregroundStyle(Theme.Colors.textPrimary)
+        .padding(.horizontal, Theme.Spacing.l)
+        .padding(.vertical, Theme.Spacing.m)
+        .background(Capsule().fill(.ultraThinMaterial))
+        .overlay(Capsule().strokeBorder(Theme.Colors.divider, lineWidth: 0.5))
+        .cardShadow()
+        .accessibilityLabel("מספר הרכב הועתק ללוח")
     }
 
     // MARK: - Hero
@@ -174,6 +238,8 @@ struct ResultView: View {
                 InfoRow(label: "סוג דלק",     value: vehicle.sug_delek_nm)
                 InfoRow(label: "הספק",        value: spec?.horsepower.map { String($0) },
                         unit: "כ״ס", monospaced: true)
+                InfoRow(label: "טווח חשמלי (WLTP)", value: electricRangeKm.map { String($0) },
+                        unit: "ק״מ", monospaced: true)
                 InfoRow(label: "נפח מנוע",    value: displacementCC.map { String($0) },
                         unit: "סמ״ק", monospaced: true)
                 InfoRow(label: "תיבת הילוכים", value: spec?.gearbox)
@@ -392,6 +458,7 @@ struct ResultView: View {
         if let c = vehicle.tzeva_rechev { lines.append("צבע: \(c)") }
         if let f = vehicle.sug_delek_nm  { lines.append("סוג דלק: \(f)") }
         if let hp = spec?.horsepower     { lines.append("הספק: \(hp) כ״ס") }
+        if let er = electricRangeKm      { lines.append("טווח חשמלי (WLTP): \(er) ק״מ") }
         if let cc = displacementCC       { lines.append("נפח מנוע: \(cc) סמ״ק") }
         if let g = spec?.gearbox         { lines.append("תיבת הילוכים: \(g)") }
         if let d = spec?.driveType       { lines.append("הנעה: \(d)") }
@@ -513,6 +580,7 @@ private struct FeatureChip: View {
         ],
         recalls: [.preview],
         prices: [.preview],
+        electricRangeKm: nil,
         freshness: .live
     )
     .environment(\.layoutDirection, .rightToLeft)

@@ -46,7 +46,10 @@ struct MyCarWidgetView: View {
                     }
                 }
                 Spacer(minLength: 0)
-                testStatus(car, large: true)
+                VStack(alignment: .center, spacing: 6) {
+                    testStatus(car, large: true)
+                    recallStatus(car)
+                }
             }
         default:
             VStack(alignment: .leading, spacing: 6) {
@@ -57,6 +60,7 @@ struct MyCarWidgetView: View {
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 testStatus(car, large: false)
+                recallStatus(car)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
@@ -111,6 +115,25 @@ struct MyCarWidgetView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
+    }
+
+    /// Open-recall status as of the last refresh: red warning with a count
+    /// when any recall is open, green all-clear otherwise.
+    private func recallStatus(_ car: MyCarStore.PinnedCar) -> some View {
+        let count = car.knownRecallIDs.count
+        return HStack(spacing: 3) {
+            Image(systemName: count > 0 ? "exclamationmark.triangle.fill"
+                                        : "checkmark.shield.fill")
+                .font(.system(size: 9, weight: .bold))
+            Text(count == 0 ? "אין ריקולים"
+                 : count == 1 ? "ריקול פתוח"
+                 : "\(count) ריקולים פתוחים")
+                .font(.system(size: 10, weight: .semibold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(count > 0 ? WidgetTheme.danger : WidgetTheme.success)
+        .accessibilityLabel(count == 0 ? "אין ריקולים פתוחים"
+                                       : "\(count) ריקולים פתוחים לרכב")
     }
 
     // MARK: - Empty state
@@ -177,6 +200,10 @@ struct MyCarWidgetView: View {
     MyCarEntry(date: .now,
                car: MyCarStore.PinnedCar(plate: 77720101, title: "C300E • 2020",
                                          tokefDt: "2027-07-06", knownRecallIDs: [],
+                                         lastRefreshed: .now, pinnedAt: .now))
+    MyCarEntry(date: .now,
+               car: MyCarStore.PinnedCar(plate: 5569379, title: "רכב עם ריקול",
+                                         tokefDt: "2026-09-15", knownRecallIDs: [4821],
                                          lastRefreshed: .now, pinnedAt: .now))
     MyCarEntry(date: .now, car: nil)
 }
