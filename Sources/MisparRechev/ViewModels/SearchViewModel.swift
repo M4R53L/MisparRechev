@@ -38,6 +38,12 @@ final class SearchViewModel {
     private(set) var snapshots: SnapshotStore
     private(set) var myCar: MyCarStore
 
+    /// True right after a *scanned* plate couldn't be looked up because the
+    /// network is down (and no snapshot exists): the search screen shows a
+    /// short notice instead of the error screen — capturing the number must
+    /// not depend on the network. Cleared by the next search or reset.
+    private(set) var scanOfflineNotice = false
+
     private let service: VehicleService
     private let defaults: UserDefaults
     private var inflight: Task<Void, Never>?
@@ -70,6 +76,19 @@ final class SearchViewModel {
 
     /// Kick off a lookup. Safe to call repeatedly; cancels any in-flight task.
     func search() {
+        runSearch(fromScan: false)
+    }
+
+    /// Scan-entry search: fills the field, then looks up. An offline failure
+    /// with no saved snapshot returns to the search screen — number kept in
+    /// the field, `scanOfflineNotice` shown — instead of the error screen.
+    func searchFromScan(plate: String) {
+        plateInput = plate // didSet re-sanitizes to digits
+        runSearch(fromScan: true)
+    }
+
+    private func runSearch(fromScan: Bool) {
+        scanOfflineNotice = false
         guard let plate = validatedPlate else {
             state = .error(.invalidPlate)
             return
@@ -94,6 +113,12 @@ final class SearchViewModel {
                     if case .network = error,
                        let snap = self.snapshots.snapshot(for: plate) {
                         self.state = .loaded(snap.result, .snapshot(snap.savedAt))
+                    } else if fromScan, case .network = error {
+                        // The scan already did its job — the number is in the
+                        // field. Land back on the search screen with a notice
+                        // rather than a full error screen.
+                        self.scanOfflineNotice = true
+                        self.state = .empty
                     } else {
                         self.state = .error(error)
                     }
@@ -137,6 +162,7 @@ final class SearchViewModel {
             return
         }
         inflight?.cancel()
+        scanOfflineNotice = false
         plateInput = String(plate)
         state = .loaded(snap.result, .snapshot(snap.savedAt))
 
@@ -154,6 +180,7 @@ final class SearchViewModel {
     /// Clear back to the empty/hero state.
     func reset() {
         inflight?.cancel()
+        scanOfflineNotice = false
         plateInput = ""
         state = .empty
     }

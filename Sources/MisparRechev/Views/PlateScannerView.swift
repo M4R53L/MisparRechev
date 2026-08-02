@@ -9,6 +9,9 @@ import VisionKit
 final class PlateScannerHostController: UIViewController {
     let scanner: DataScannerViewController
     private let onUnavailable: () -> Void
+    /// Reports the scanner view's size on layout — the coordinator caches it
+    /// so delegate callbacks never touch UIKit views off the main thread.
+    var onViewSizeChange: ((CGSize) -> Void)?
 
     init(scanner: DataScannerViewController, onUnavailable: @escaping () -> Void) {
         self.scanner = scanner
@@ -28,17 +31,13 @@ final class PlateScannerHostController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         scanner.view.frame = view.bounds
-        let width = view.bounds.width
-        let height = view.bounds.height
-        guard width > 0, height > 0 else { return }
-        // Recognize only a horizontal band around the plate cutout (which is
-        // 85% width × 4.6:1, centered — see PlateScannerSheet). 3× the cutout
-        // height forgives shaky aim while skipping bumper stickers, signs and
-        // other text that would slow recognition down and cause false locks.
-        let bandHeight = min(max(width * 0.85 / 4.6 * 3, 160), height)
-        scanner.regionOfInterest = CGRect(
-            x: 0, y: (height - bandHeight) / 2, width: width, height: bandHeight
-        )
+        let size = view.bounds.size
+        guard size.width > 0, size.height > 0 else { return }
+        // Recognize only around the plate cutout — VisionKit itself then
+        // skips bumper stickers, signs and other distant text, and its
+        // highlight boxes double as aim feedback near the viewfinder.
+        scanner.regionOfInterest = PlateViewfinder.regionOfInterest(in: size)
+        onViewSizeChange?(size)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -56,6 +55,9 @@ final class PlateScannerHostController: UIViewController {
 /// `onPlateFound` (digits only).
 struct DataScannerRepresentable: UIViewControllerRepresentable {
     let onPlateFound: (String) -> Void
+    /// Live feedback: the best plate read so far (nil when nothing
+    /// plate-shaped is in view). Drives the tappable candidate pill.
+    let onCandidate: (PlateRecognizer.Candidate?) -> Void
     /// Called when the scanner cannot start (e.g. camera permission denied).
     let onUnavailable: () -> Void
 
@@ -74,7 +76,11 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
             isHighlightingEnabled: true
         )
         scanner.delegate = context.coordinator
-        return scanner.withHost(onUnavailable: onUnavailable)
+        let host = scanner.withHost(onUnavailable: onUnavailable)
+        host.onViewSizeChange = { [weak coordinator = context.coordinator] size in
+            coordinator?.viewSize = size
+        }
+        return host
     }
 
     func updateUIViewController(_ host: PlateScannerHostController, context: Context) {}
@@ -84,16 +90,26 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
         host.scanner.stopScanning()
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(onPlateFound: onPlateFound) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPlateFound: onPlateFound, onCandidate: onCandidate)
+    }
 
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
         private let onPlateFound: (String) -> Void
+        private let onCandidate: (PlateRecognizer.Candidate?) -> Void
         private var lastCandidate: String?
         private var stableCount = 0
         private var accepted = false
+        private var lastItems: [RecognizedItem] = []
+        private var reportedCandidate: PlateRecognizer.Candidate?
+        /// Scanner view size, cached from layout so delegate callbacks never
+        /// read UIKit views off the main thread.
+        var viewSize: CGSize = .zero
 
-        init(onPlateFound: @escaping (String) -> Void) {
+        init(onPlateFound: @escaping (String) -> Void,
+             onCandidate: @escaping (PlateRecognizer.Candidate?) -> Void) {
             self.onPlateFound = onPlateFound
+            self.onCandidate = onCandidate
         }
 
         func dataScanner(_ dataScanner: DataScannerViewController,
@@ -109,46 +125,96 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
         }
 
         func dataScanner(_ dataScanner: DataScannerViewController,
+                         didRemove removedItems: [RecognizedItem],
+                         allItems: [RecognizedItem]) {
+            // Keeps the candidate pill honest — it hides when the plate
+            // leaves the viewfinder.
+            consider(allItems)
+        }
+
+        func dataScanner(_ dataScanner: DataScannerViewController,
                          didTapOn item: RecognizedItem) {
-            guard case .text(let text) = item,
-                  let plate = PlateRecognizer.extractPlate(from: text.transcript) else { return }
-            accept(plate)
+            guard case .text = item else { return }
+            // Prefer the read already shown in the pill; otherwise re-derive
+            // from the last frame — tapping any part of the plate accepts the
+            // full plate read, not just the tapped digit group.
+            if let candidate = reportedCandidate {
+                accept(candidate.digits)
+                return
+            }
+            let transcripts = PlateRecognizer.plateTranscripts(
+                from: observations(from: lastItems))
+            guard let best = PlateRecognizer.bestCandidate(in: transcripts) else { return }
+            accept(best.digits)
         }
 
         private func consider(_ items: [RecognizedItem]) {
             guard !accepted else { return }
-            let transcripts = items.compactMap { item -> String? in
-                if case .text(let text) = item { return text.transcript }
-                return nil
-            }
-            guard let best = PlateRecognizer.bestCandidate(in: transcripts) else { return }
+            lastItems = items
+            guard viewSize != .zero else { return }
+            let frameObservations = observations(from: items)
+            let cutout = PlateViewfinder.cutout(in: viewSize)
 
-            // A read in the exact Israeli print format (3-2-3 / 2-3-2) is a
-            // complete plate — accept it immediately, no stability wait.
-            if best.isCanonicalFormat {
-                accept(best.digits)
-                return
-            }
-            // Otherwise require the same read across consecutive frames —
-            // one frame's OCR can misread or truncate a digit. Legacy 6-digit
-            // reads need an extra frame, since they are also what a partially
-            // captured 7–8-digit plate looks like.
+            // Auto-accept path: only text geometrically verified as the aimed
+            // plate — inside the cutout, at plate-digit size.
+            let geometry = PlateRecognizer.viewfinderCandidate(
+                from: frameObservations, cutout: cutout)
+            // Fallback: anything plate-shaped in the ROI — powers the pill
+            // and a slower accept when the size filter misjudges (e.g. the
+            // user aiming from afar).
+            let best = geometry ?? PlateRecognizer.bestCandidate(
+                in: PlateRecognizer.plateTranscripts(from: frameObservations))
+            report(best)
+            guard let best else { return }
+
+            // Require the same read across consecutive frames; how many
+            // depends on how trustworthy the read's shape and geometry are
+            // (canonical/single-run in-cutout reads accept on frame one).
             if best.digits == lastCandidate {
                 stableCount += 1
             } else {
                 lastCandidate = best.digits
                 stableCount = 1
             }
-            if stableCount >= (best.digits.count >= 7 ? 2 : 3) {
+            if stableCount >= PlateRecognizer.framesRequired(
+                for: best, geometryVerified: geometry != nil) {
                 accept(best.digits)
             }
+        }
+
+        /// Maps VisionKit items into the recognizer's geometry-bearing
+        /// fragments so split digit groups can be merged back into a plate.
+        private func observations(from items: [RecognizedItem]) -> [PlateRecognizer.TextObservation] {
+            items.compactMap { item in
+                guard case .text(let text) = item else { return nil }
+                let bounds = item.bounds
+                let topY = (bounds.topLeft.y + bounds.topRight.y) / 2
+                let bottomY = (bounds.bottomLeft.y + bounds.bottomRight.y) / 2
+                return PlateRecognizer.TextObservation(
+                    transcript: text.transcript,
+                    minX: Double(min(bounds.topLeft.x, bounds.bottomLeft.x)),
+                    maxX: Double(max(bounds.topRight.x, bounds.bottomRight.x)),
+                    midY: Double(topY + bottomY) / 2,
+                    height: abs(Double(bottomY - topY))
+                )
+            }
+        }
+
+        private func report(_ candidate: PlateRecognizer.Candidate?) {
+            guard candidate != reportedCandidate else { return }
+            reportedCandidate = candidate
+            let onCandidate = onCandidate
+            // Delegate queue isn't documented as main — hop before touching
+            // SwiftUI state.
+            DispatchQueue.main.async { onCandidate(candidate) }
         }
 
         private func accept(_ plate: String) {
             guard !accepted else { return }
             accepted = true
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            onPlateFound(plate)
+            let onPlateFound = onPlateFound
+            DispatchQueue.main.async { onPlateFound(plate) }
         }
     }
 }
@@ -167,6 +233,7 @@ struct PlateScannerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isUnavailable = false
     @State private var isTorchOn = false
+    @State private var liveCandidate: PlateRecognizer.Candidate?
 
     var body: some View {
         ZStack {
@@ -175,6 +242,7 @@ struct PlateScannerSheet: View {
             } else {
                 DataScannerRepresentable(
                     onPlateFound: onPlateFound,
+                    onCandidate: { liveCandidate = $0 },
                     onUnavailable: { isUnavailable = true }
                 )
                 .ignoresSafeArea()
@@ -184,13 +252,18 @@ struct PlateScannerSheet: View {
             VStack {
                 Spacer()
                 if !isUnavailable {
-                    Text("כוונו את המצלמה ללוחית הרישוי")
-                        .font(Theme.Typography.headline)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, Theme.Spacing.l)
-                        .padding(.vertical, Theme.Spacing.m)
-                        .background(Capsule().fill(.black.opacity(0.55)))
-                        .padding(.bottom, Theme.Spacing.l)
+                    VStack(spacing: Theme.Spacing.s) {
+                        Text("כוונו את המצלמה ללוחית הרישוי")
+                            .font(Theme.Typography.headline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, Theme.Spacing.l)
+                            .padding(.vertical, Theme.Spacing.m)
+                            .background(Capsule().fill(.black.opacity(0.55)))
+                        if let liveCandidate {
+                            candidatePill(liveCandidate)
+                        }
+                    }
+                    .padding(.bottom, Theme.Spacing.l)
                 }
                 HStack(spacing: Theme.Spacing.xxl) {
                     if !isUnavailable {
@@ -206,6 +279,32 @@ struct PlateScannerSheet: View {
         }
         .background(Color.black.ignoresSafeArea())
         .onDisappear { setTorch(false) }
+    }
+
+    // MARK: - Live candidate
+
+    /// The best plate read so far, shown as printed ("123-45-678"). Tapping
+    /// accepts it immediately — a manual escape hatch when OCR flicker keeps
+    /// the auto-lock from converging.
+    private func candidatePill(_ candidate: PlateRecognizer.Candidate) -> some View {
+        Button {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            onPlateFound(candidate.digits)
+        } label: {
+            HStack(spacing: Theme.Spacing.s) {
+                Text("זוהה:")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(.white)
+                Text(PlateRecognizer.formatted(candidate))
+                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Theme.Colors.plateYellow)
+            }
+            .padding(.horizontal, Theme.Spacing.l)
+            .padding(.vertical, Theme.Spacing.m)
+            .background(Capsule().fill(.black.opacity(0.55)))
+        }
+        .accessibilityLabel("אישור המספר שזוהה")
+        .accessibilityHint("מפעיל חיפוש עבור המספר שזוהה במצלמה")
     }
 
     // MARK: - Torch
@@ -233,19 +332,20 @@ struct PlateScannerSheet: View {
 
     // MARK: - Viewfinder
 
-    /// Dimmed overlay with a clear plate-aspect window in the middle.
+    /// Dimmed overlay with a clear plate-aspect window in the middle. The
+    /// window is `PlateViewfinder.cutout` — the same rect the recognizer
+    /// accepts text in, so what the user sees is what gets read.
     private var viewfinderOverlay: some View {
         GeometryReader { proxy in
-            let width = proxy.size.width * 0.85
-            let height = width / 4.6 // Israeli plate aspect ratio ≈ 520×110mm
+            let cutout = PlateViewfinder.cutout(in: proxy.size)
             ZStack {
                 Color.black.opacity(0.45)
                 RoundedRectangle(cornerRadius: Theme.Radius.plate, style: .continuous)
-                    .frame(width: width, height: height)
+                    .frame(width: cutout.width, height: cutout.height)
                     .blendMode(.destinationOut)
                 RoundedRectangle(cornerRadius: Theme.Radius.plate, style: .continuous)
                     .strokeBorder(Theme.Colors.plateYellow, lineWidth: 3)
-                    .frame(width: width, height: height)
+                    .frame(width: cutout.width, height: cutout.height)
             }
             .compositingGroup()
         }

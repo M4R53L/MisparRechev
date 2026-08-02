@@ -39,8 +39,7 @@ struct SearchView: View {
         .sheet(isPresented: $isShowingScanner) {
             PlateScannerSheet { plate in
                 isShowingScanner = false
-                viewModel.plateInput = plate // didSet re-sanitizes to digits
-                viewModel.search()
+                viewModel.searchFromScan(plate: plate)
             }
         }
         .sheet(item: $comparePair, onDismiss: {
@@ -78,6 +77,16 @@ struct SearchView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
             PlateField(text: $viewModel.plateInput,
                        onScan: canScan ? { isShowingScanner = true } : nil)
+
+            if viewModel.scanOfflineNotice {
+                HStack(spacing: Theme.Spacing.s) {
+                    Image(systemName: "wifi.slash")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("אין חיבור לאינטרנט — המספר שנסרק הוזן בשדה")
+                        .font(Theme.Typography.caption)
+                }
+                .foregroundStyle(Theme.Colors.textSecondary)
+            }
 
             Button {
                 viewModel.search()
