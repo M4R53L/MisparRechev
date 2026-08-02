@@ -3,7 +3,7 @@ import Foundation
 /// A single ownership-transfer record from the "היסטוריית כלי רכב פרטיים (2)"
 /// resource (`bb2355dc`). A plate has one of these per ownership period since
 /// 2017, sorted ascending by `baalut_dt`.
-struct OwnershipRecord: Decodable, Hashable {
+struct OwnershipRecord: Codable, Hashable {
     let mispar_rechev: Int
     /// תאריך תחילת הבעלות בפורמט YYYYMM (למשל 202106 = יוני 2021).
     let baalut_dt: Int?

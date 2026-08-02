@@ -6,7 +6,7 @@ import Foundation
 /// Every field except `mispar_rechev` is optional: the resource is large and
 /// not every plate exposes every field. Missing fields render as "—" or hide
 /// their row, so the UI degrades gracefully.
-struct Vehicle: Decodable, Identifiable, Equatable {
+struct Vehicle: Codable, Identifiable, Equatable {
     /// מספר רישוי — the license-plate number (primary key).
     let mispar_rechev: Int
     /// קוד תוצר — joins to the new-car price resource (`mehir_yevuan`).
@@ -77,6 +77,9 @@ struct Vehicle: Decodable, Identifiable, Equatable {
     let degem_manoa: String?
     /// מספר מנוע.
     let mispar_manoa: String?
+    /// תאריך ביטול סופי ("2026-07-30 00:00:00") — קיים רק במאגרי "כלי רכב
+    /// שירדו מהכביש"; ערך לא-ריק מסמן רכב שירד מהכביש.
+    let bitul_dt: String?
 
     var id: Int { mispar_rechev }
 
@@ -142,6 +145,11 @@ struct Vehicle: Decodable, Identifiable, Equatable {
     /// מספר מנוע.
     var engineNumber: String? {
         mispar_manoa?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty
+    }
+
+    /// האם הרכב ירד מהכביש (הגיע ממאגר "ביטול סופי").
+    var isDeregistered: Bool {
+        bitul_dt?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty != nil
     }
 }
 

@@ -1,22 +1,28 @@
 import Foundation
 import SwiftUI
 
+/// Where a shown result came from: a live fetch, or a stored offline snapshot
+/// (with the date it was saved). Drives the "מוצג מידע שמור" banner.
+enum DataFreshness: Equatable {
+    case live
+    case snapshot(Date)
+}
+
 /// UI state machine for the lookup flow.
 enum LookupState: Equatable {
     case empty
     case loading
-    case loaded(LookupResult)
+    case loaded(LookupResult, DataFreshness)
     case error(VehicleError)
-}
-
-/// Whether a date-based validity (test/license) is active, expiring soon, or
-/// expired. Used by the design system to pick a status color.
-enum ValidityStatus: Equatable {
-    case valid, expiringSoon, expired, unknown
 }
 
 @Observable
 final class SearchViewModel {
+    /// The app's live instance — `MisparRechevApp` renders it, and out-of-app
+    /// entry points (App Shortcut intent, deep links) drive the UI through it.
+    /// Tests and previews construct their own instances.
+    static let shared = SearchViewModel()
+
     /// Current plate input as a raw string (digits only on screen).
     var plateInput: String = "" {
         didSet {
@@ -29,6 +35,8 @@ final class SearchViewModel {
 
     private(set) var state: LookupState = .empty
     private(set) var history: SearchHistoryStore
+    private(set) var snapshots: SnapshotStore
+    private(set) var myCar: MyCarStore
 
     private let service: VehicleService
     private let defaults: UserDefaults
@@ -37,11 +45,15 @@ final class SearchViewModel {
     init(
         service: VehicleService = VehicleService(),
         history: SearchHistoryStore = .load(),
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        snapshots: SnapshotStore = .load(),
+        myCar: MyCarStore = .load()
     ) {
         self.service = service
         self.history = history
         self.defaults = defaults
+        self.snapshots = snapshots
+        self.myCar = myCar
     }
 
     /// The parsed plate number, or `nil` when input is not 6–8 digits.
@@ -71,18 +83,20 @@ final class SearchViewModel {
                 let result = try await self.service.lookup(plate: plate)
                 guard !Task.isCancelled else { return }
                 await MainActor.run {
-                    self.state = .loaded(result)
-                    self.history = self.history.recording(
-                        plate: plate,
-                        manufacturer: result.vehicle.manufacturer,
-                        model: result.vehicle.model,
-                        year: result.vehicle.year)
-                    self.history.save(defaults: self.defaults)
+                    self.apply(result, for: plate)
                 }
             } catch let error as VehicleError {
                 await MainActor.run {
                     guard !Task.isCancelled else { return }
-                    self.state = .error(error)
+                    // Offline fallback: when the network failed and a snapshot
+                    // exists for this plate, show the saved data with a note
+                    // instead of the error screen.
+                    if case .network = error,
+                       let snap = self.snapshots.snapshot(for: plate) {
+                        self.state = .loaded(snap.result, .snapshot(snap.savedAt))
+                    } else {
+                        self.state = .error(error)
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -93,10 +107,48 @@ final class SearchViewModel {
         }
     }
 
+    /// Applies a fresh (live) result: state, search history, offline snapshot.
+    @MainActor
+    private func apply(_ result: LookupResult, for plate: Int) {
+        state = .loaded(result, .live)
+        history = history.recording(
+            plate: plate,
+            manufacturer: result.vehicle.manufacturer,
+            model: result.vehicle.model,
+            year: result.vehicle.year)
+        history.save(defaults: defaults)
+        snapshots = snapshots.saving(result, for: plate)
+        snapshots.save()
+    }
+
     /// Re-run a lookup for a plate tapped in history.
     func search(plate: Int) {
         plateInput = String(plate)
         search()
+    }
+
+    /// History-tap path (stale-while-revalidate): when a snapshot exists, show
+    /// it instantly and revalidate live in the background — a live success
+    /// replaces the screen, any live failure keeps the snapshot. Without a
+    /// snapshot this is a plain `search(plate:)`.
+    func searchFromHistory(plate: Int) {
+        guard let snap = snapshots.snapshot(for: plate) else {
+            search(plate: plate)
+            return
+        }
+        inflight?.cancel()
+        plateInput = String(plate)
+        state = .loaded(snap.result, .snapshot(snap.savedAt))
+
+        inflight = Task { [weak self] in
+            guard let self else { return }
+            guard let result = try? await self.service.lookup(plate: plate) else { return }
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard !Task.isCancelled else { return }
+                self.apply(result, for: plate)
+            }
+        }
     }
 
     /// Clear back to the empty/hero state.
@@ -104,6 +156,46 @@ final class SearchViewModel {
         inflight?.cancel()
         plateInput = ""
         state = .empty
+    }
+
+    // MARK: - My car (pinned)
+
+    var pinnedPlate: Int? { myCar.car?.plate }
+
+    func isPinned(_ plate: Int) -> Bool { myCar.car?.plate == plate }
+
+    /// Pins the currently shown vehicle as "הרכב שלי": seeds its status from
+    /// the on-screen result, asks for notification permission, and schedules
+    /// the test-expiry reminders.
+    func pinCurrentCar() {
+        guard case .loaded(let result, _) = state else { return }
+        let vehicle = result.vehicle
+        let title = [vehicle.model ?? vehicle.manufacturer, vehicle.year]
+            .compactMap { $0 }.joined(separator: " • ")
+        myCar = myCar.pinning(
+            plate: vehicle.mispar_rechev,
+            title: title.isEmpty ? String(vehicle.mispar_rechev) : title,
+            tokefDt: vehicle.tokef_dt,
+            recallIDs: result.recalls.compactMap { $0.RECALL_ID })
+        myCar.save()
+        Task { [weak self] in
+            await MyCarRefresher.shared.requestAuthorization()
+            MyCarRefresher.shared.applyPinned(result: result)
+            guard let self else { return }
+            await MainActor.run { self.reloadMyCar() }
+        }
+    }
+
+    func unpinCar() {
+        myCar = myCar.unpinning()
+        myCar.save()
+        MyCarRefresher.shared.cancelAllMyCarNotifications()
+    }
+
+    /// Re-reads the shared store after out-of-band writes (background refresh,
+    /// pin-time seeding) so the UI reflects the latest status.
+    func reloadMyCar() {
+        myCar = .load()
     }
 
     func removeHistory(plate: Int) {
@@ -116,57 +208,23 @@ final class SearchViewModel {
         history.save(defaults: defaults)
     }
 
-    // MARK: - Validity helpers
+    // MARK: - Validity helpers (forwarders)
 
-    /// Computes validity status for a date string coming from the API.
-    /// Accepts several formats (`yyyy-MM-dd`, `dd/MM/yyyy`, ISO with time).
-    ///
-    /// `now` is injectable for deterministic tests; views call the no-arg form.
+    // The implementations live in `PlateDates`, which is Foundation-only and
+    // shared with the widget extension; these forwarders keep the app's many
+    // existing `SearchViewModel.*` call sites unchanged.
+
     static func validity(of dateString: String?, now: Date = .now) -> ValidityStatus {
-        guard let dateString, let date = parse(dateString) else { return .unknown }
-        let calendar = Calendar.current
-        if date < calendar.startOfDay(for: now) { return .expired }
-        if let soon = calendar.date(byAdding: .month, value: 2, to: now), date <= soon {
-            return .expiringSoon
-        }
-        return .valid
+        PlateDates.validity(of: dateString, now: now)
     }
 
-    private static let formatters: [DateFormatter] = {
-        // Order matters: more specific formats first so "2017-03-16" is not
-        // half-parsed by the loose "yyyy-M" format (last). Strict matching.
-        let formats = ["yyyy-MM-dd'T'HH:mm:ss",
-                       "yyyy-MM-dd HH:mm:ss",
-                       "yyyy-MM-dd",
-                       "dd/MM/yyyy",
-                       "dd-MM-yyyy",
-                       "yyyy-M"]
-        return formats.map { fmt in
-            let f = DateFormatter()
-            f.locale = Locale(identifier: "en_US_POSIX")
-            f.timeZone = TimeZone(identifier: "Asia/Jerusalem")
-            f.isLenient = false
-            f.dateFormat = fmt
-            return f
-        }
-    }()
-
     static func parse(_ dateString: String) -> Date? {
-        let trimmed = dateString.trimmingCharacters(in: .whitespacesAndNewlines)
-        for formatter in formatters {
-            if let date = formatter.date(from: trimmed) { return date }
-        }
-        return nil
+        PlateDates.parse(dateString)
     }
 
     /// Formats an API date string into a friendly Hebrew `d בMONTH yyyy` form.
     static func displayDate(_ dateString: String?) -> String? {
-        guard let dateString, let date = parse(dateString) else { return nil }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "he_IL")
-        formatter.timeZone = TimeZone(identifier: "Asia/Jerusalem")
-        formatter.dateFormat = "d בMMMM yyyy"
-        return formatter.string(from: date)
+        PlateDates.displayDate(dateString)
     }
 
     /// Formats an ownership `baalut_dt` integer (YYYYMM, e.g. 202106) into a

@@ -31,6 +31,16 @@ enum DataGovEndpoint {
         heavyTruckResourceID
     ]
 
+    /// כלי רכב שירדו מהכביש ובסטטוס ביטול סופי — three era-split, disjoint,
+    /// filter-indexed resources (lowercase `mispar_rechev`, plate as a JSON
+    /// string). Queried only after the primary + fallbacks all miss; a record
+    /// carries near-full vehicle fields plus `bitul_dt` (cancellation date).
+    static let deregisteredResourceIDs: [String] = [
+        "851ecab1-0622-4dbe-a6c7-f950cf82abf9", // current era (~1.19M records)
+        "4e6b9724-4c1e-43f0-909a-154d4cc4e046", // 2010–2016
+        "ec8cbc34-72e1-4b69-9c48-22821ba0bd6c"  // 2000–2009
+    ]
+
     /// היסטוריית כלי רכב פרטיים (1) — last mileage + change flags (2017+).
     /// Queried with an exact `filters` match; one record per plate (or none).
     static let mileageResourceID = "56063a99-8a3e-4ff4-912e-5966c0279bad"
@@ -77,6 +87,26 @@ enum DataGovEndpoint {
         let filters = #"{"tozeret_cd":"\#(tozeretCd)","degem_cd":"\#(degemCd)","sug_degem":"\#(sugDegem)","shnat_yitzur":"\#(year)"}"#
         components.queryItems = [
             URLQueryItem(name: "resource_id", value: priceResourceID),
+            URLQueryItem(name: "filters", value: filters),
+            URLQueryItem(name: "limit", value: String(limit))
+        ]
+        return components.url!
+    }
+
+    /// מאגר דגמי רכב — per-model/trim/year spec sheet (horsepower, gearbox,
+    /// drive, body, seats, airbags, safety-assist flags). Joined on the same
+    /// four model-identity keys as the price resource; normally one record.
+    static let specResourceID = "142afde2-6228-49f9-8a29-9b6c3a0cbe40"
+
+    /// Builds a `datastore_search` URL for the model-spec resource, filtered
+    /// on the four model-identity keys (values as JSON strings, per the usual
+    /// data.gov.il quirk).
+    static func specSearchURL(tozeretCd: Int, degemCd: Int, sugDegem: String,
+                              year: Int, limit: Int = 8) -> URL {
+        var components = URLComponents(url: base, resolvingAgainstBaseURL: false)!
+        let filters = #"{"tozeret_cd":"\#(tozeretCd)","degem_cd":"\#(degemCd)","sug_degem":"\#(sugDegem)","shnat_yitzur":"\#(year)"}"#
+        components.queryItems = [
+            URLQueryItem(name: "resource_id", value: specResourceID),
             URLQueryItem(name: "filters", value: filters),
             URLQueryItem(name: "limit", value: String(limit))
         ]

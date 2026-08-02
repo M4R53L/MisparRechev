@@ -1,0 +1,173 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "142afde2-6228-49f9-8a29-9b6c3a0cbe40",
+    "fields": [
+      {
+        "id": "sug_degem",
+        "type": "text"
+      },
+      {
+        "id": "tozeret_cd",
+        "type": "numeric"
+      },
+      {
+        "id": "degem_cd",
+        "type": "numeric"
+      },
+      {
+        "id": "shnat_yitzur",
+        "type": "numeric"
+      },
+      {
+        "id": "nefah_manoa",
+        "type": "numeric"
+      },
+      {
+        "id": "mishkal_kolel",
+        "type": "numeric"
+      },
+      {
+        "id": "hanaa_nm",
+        "type": "text"
+      },
+      {
+        "id": "abs_ind",
+        "type": "numeric"
+      },
+      {
+        "id": "mispar_kariot_avir",
+        "type": "numeric"
+      },
+      {
+        "id": "automatic_ind",
+        "type": "numeric"
+      },
+      {
+        "id": "merkav",
+        "type": "text"
+      },
+      {
+        "id": "mispar_dlatot",
+        "type": "numeric"
+      },
+      {
+        "id": "koah_sus",
+        "type": "numeric"
+      },
+      {
+        "id": "mispar_moshavim",
+        "type": "numeric"
+      },
+      {
+        "id": "bakarat_yatzivut_ind",
+        "type": "numeric"
+      },
+      {
+        "id": "technologiat_hanaa_nm",
+        "type": "text"
+      }
+    ],
+    "records": [
+      {
+        "_id": 44535,
+        "sug_degem": "P",
+        "tozeret_cd": 588,
+        "tozeret_nm": "מזדה יפן",
+        "tozeret_eretz_nm": "יפן",
+        "tozar": "מזדה",
+        "degem_cd": 12,
+        "degem_nm": "NC18F",
+        "shnat_yitzur": 2008,
+        "kvuzat_agra_cd": 5,
+        "nefah_manoa": 1999,
+        "mishkal_kolel": 1164,
+        "gova": null,
+        "hanaa_cd": 1,
+        "hanaa_nm": "4X2",
+        "mazgan_ind": 1,
+        "abs_ind": 1,
+        "kariot_avir_source": "4",
+        "mispar_kariot_avir": 4,
+        "hege_koah_ind": 1,
+        "automatic_ind": 0,
+        "halonot_hashmal_source": "2",
+        "mispar_halonot_hashmal": 2,
+        "halon_bagg_ind": 0,
+        "galgaley_sagsoget_kala_ind": 1,
+        "argaz_ind": 0,
+        "merkav": "קבריולט",
+        "ramat_gimur": "S",
+        "delek_cd": 1,
+        "delek_nm": "בנזין",
+        "mispar_dlatot": 2,
+        "koah_sus": 160,
+        "mispar_moshavim": 2,
+        "bakarat_yatzivut_ind": 1,
+        "kosher_grira_im_blamim": 0,
+        "kosher_grira_bli_blamim": 0,
+        "sug_tkina_cd": 1,
+        "sug_tkina_nm": "אירופאית",
+        "sug_mamir_cd": 0,
+        "sug_mamir_nm": "לא ידוע קוד 0",
+        "technologiat_hanaa_cd": null,
+        "technologiat_hanaa_nm": "הנעה רגילה",
+        "kamut_CO2": 181,
+        "kamut_NOX": 0.01,
+        "kamut_PM10": null,
+        "kamut_HC": 0.04,
+        "kamut_HC_NOX": null,
+        "kamut_CO": 0.32,
+        "kamut_CO2_city": null,
+        "kamut_NOX_city": null,
+        "kamut_PM10_city": null,
+        "kamut_HC_city": null,
+        "kamut_CO_city": null,
+        "kamut_CO2_hway": null,
+        "kamut_NOX_hway": null,
+        "kamut_PM10_hway": null,
+        "kamut_HC_hway": null,
+        "kamut_CO_hway": null,
+        "madad_yarok": 324,
+        "kvutzat_zihum": 15,
+        "bakarat_stiya_menativ_ind": 0,
+        "bakarat_stiya_menativ_makor_hatkana": "",
+        "nitur_merhak_milfanim_ind": 0,
+        "nitur_merhak_milfanim_makor_hatkana": "",
+        "zihuy_beshetah_nistar_ind": 0,
+        "bakarat_shyut_adaptivit_ind": 0,
+        "zihuy_holchey_regel_ind": 0,
+        "zihuy_holchey_regel_makor_hatkana": "",
+        "maarechet_ezer_labalam_ind": 0,
+        "matzlemat_reverse_ind": 0,
+        "hayshaney_lahatz_avir_batzmigim_ind": 0,
+        "hayshaney_hagorot_ind": 0,
+        "nikud_betihut": null,
+        "ramat_eivzur_betihuty": null,
+        "teura_automatit_benesiya_kadima_ind": 0,
+        "shlita_automatit_beorot_gvohim_ind": 0,
+        "shlita_automatit_beorot_gvohim_makor_hatkana": "",
+        "zihuy_matzav_hitkarvut_mesukenet_ind": 0,
+        "zihuy_tamrurey_tnua_ind": 0,
+        "zihuy_rechev_do_galgali": 0,
+        "zihuy_tamrurey_tnua_makor_hatkana": "",
+        "CO2_WLTP": null,
+        "HC_WLTP": null,
+        "PM_WLTP": null,
+        "NOX_WLTP": null,
+        "CO_WLTP": null,
+        "CO2_WLTP_NEDC": null,
+        "bakarat_stiya_activ_s": 0,
+        "blima_otomatit_nesia_leahor": 0,
+        "bakarat_mehirut_isa": 0,
+        "blimat_hirum_lifnei_holhei_regel_ofanaim": 0,
+        "hitnagshut_cad_shetah_met": 0,
+        "alco_lock": 0,
+        "dg_metach_solela": null,
+        "kinuy_mishari": "MX 5"
+      }
+    ],
+    "total": 1
+  }
+}

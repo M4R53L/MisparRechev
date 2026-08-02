@@ -7,7 +7,7 @@ import Foundation
 ///
 /// Every field except `mispar_rechev` is optional so the UI hides unavailable
 /// data. The change flags are 0/1 integers in the source (coerced to `Bool`).
-struct VehicleHistory: Decodable, Identifiable, Equatable {
+struct VehicleHistory: Codable, Identifiable, Equatable {
     let mispar_rechev: Int
     /// מספר מנוע.
     let mispar_manoa: String?

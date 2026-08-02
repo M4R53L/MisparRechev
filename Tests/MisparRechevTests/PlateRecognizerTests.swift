@@ -49,4 +49,47 @@ final class PlateRecognizerTests: XCTestCase {
     func testRejectsTextWithoutDigits() {
         XCTAssertNil(PlateRecognizer.extractPlate(from: "מספר רכב"))
     }
+
+    // MARK: - Canonical Israeli print formats (single-frame accept)
+
+    func testEightDigitPrintFormatIsCanonical() {
+        let candidate = PlateRecognizer.candidates(in: "123-45-678").first
+        XCTAssertEqual(candidate?.groups, [3, 2, 3])
+        XCTAssertEqual(candidate?.isCanonicalFormat, true)
+    }
+
+    func testSevenDigitPrintFormatIsCanonical() {
+        let candidate = PlateRecognizer.candidates(in: "12-345-67").first
+        XCTAssertEqual(candidate?.groups, [2, 3, 2])
+        XCTAssertEqual(candidate?.isCanonicalFormat, true)
+    }
+
+    /// A truncated 8-digit plate ("123-45-678" losing its last digit) still
+    /// has 7 digits but the wrong group shape — it must NOT be canonical, so
+    /// the scanner waits for stable frames instead of accepting a bad read.
+    func testTruncatedEightDigitReadIsNotCanonical() {
+        let candidate = PlateRecognizer.candidates(in: "123-45-67").first
+        XCTAssertEqual(candidate?.groups, [3, 2, 2])
+        XCTAssertEqual(candidate?.isCanonicalFormat, false)
+    }
+
+    func testPlainDigitRunIsNotCanonical() {
+        XCTAssertEqual(PlateRecognizer.candidates(in: "1234567").first?.isCanonicalFormat, false)
+    }
+
+    // MARK: - Best candidate across a camera frame's items
+
+    func testBestCandidatePrefersCanonicalPlateOverOtherText() {
+        let best = PlateRecognizer.bestCandidate(in: ["שנת 2020", "556937", "123-45-678"])
+        XCTAssertEqual(best?.digits, "12345678")
+    }
+
+    func testBestCandidatePrefersSevenDigitsOverLegacySix() {
+        let best = PlateRecognizer.bestCandidate(in: ["123456", "5569379"])
+        XCTAssertEqual(best?.digits, "5569379")
+    }
+
+    func testBestCandidateNilWhenNoPlateShapedText() {
+        XCTAssertNil(PlateRecognizer.bestCandidate(in: ["יונדאי", "0501234567", ""]))
+    }
 }

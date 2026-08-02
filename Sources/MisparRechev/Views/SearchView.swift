@@ -2,9 +2,19 @@ import SwiftUI
 import VisionKit
 
 /// The hero / empty state. Title, plate field, search button, and a recent-history list.
+/// Two plates picked for comparison; `Identifiable` so it can drive a sheet.
+private struct ComparePair: Identifiable, Equatable {
+    let a: Int
+    let b: Int
+    var id: String { "\(a)-\(b)" }
+}
+
 struct SearchView: View {
     @Bindable var viewModel: SearchViewModel
     @State private var isShowingScanner = false
+    @State private var isCompareMode = false
+    @State private var compareSelection: [Int] = []
+    @State private var comparePair: ComparePair?
 
     /// Camera scanning needs a device with a camera and an A12+ Neural Engine
     /// (every iOS 17 device qualifies); false on the simulator, hiding the button.
@@ -17,6 +27,7 @@ struct SearchView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                 header
                 plateAndButton
+                myCarSection
                 historySection
             }
             .padding(.horizontal, Theme.Spacing.l)
@@ -31,6 +42,12 @@ struct SearchView: View {
                 viewModel.plateInput = plate // didSet re-sanitizes to digits
                 viewModel.search()
             }
+        }
+        .sheet(item: $comparePair, onDismiss: {
+            isCompareMode = false
+            compareSelection = []
+        }) { pair in
+            CompareView(plateA: pair.a, plateB: pair.b, initialA: nil)
         }
     }
 
@@ -83,6 +100,17 @@ struct SearchView: View {
         }
     }
 
+    // MARK: - My car
+
+    @ViewBuilder
+    private var myCarSection: some View {
+        if let car = viewModel.myCar.car {
+            MyCarCard(car: car) {
+                viewModel.searchFromHistory(plate: car.plate)
+            }
+        }
+    }
+
     // MARK: - History
 
     @ViewBuilder
@@ -94,22 +122,47 @@ struct SearchView: View {
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.textPrimary)
                     Spacer()
-                    Button(role: .destructive) {
-                        viewModel.clearHistory()
-                    } label: {
-                        Text("נקה היסטוריה")
-                            .font(Theme.Typography.captionBold)
+                    if viewModel.history.entries.count >= 2 {
+                        Button {
+                            isCompareMode.toggle()
+                            compareSelection = []
+                        } label: {
+                            Text(isCompareMode ? "ביטול" : "השווה")
+                                .font(Theme.Typography.captionBold)
+                        }
+                    }
+                    if !isCompareMode {
+                        Button(role: .destructive) {
+                            viewModel.clearHistory()
+                        } label: {
+                            Text("נקה היסטוריה")
+                                .font(Theme.Typography.captionBold)
+                        }
                     }
                 }
                 .padding(.bottom, Theme.Spacing.xs)
 
+                if isCompareMode {
+                    Text("בחרו שני רכבים להשוואה")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                        .padding(.bottom, Theme.Spacing.xs)
+                }
+
                 VStack(spacing: 0) {
                     ForEach(viewModel.history.entries) { entry in
                         Button {
-                            viewModel.search(plate: entry.plate)
+                            if isCompareMode {
+                                toggleCompareSelection(entry.plate)
+                            } else {
+                                viewModel.searchFromHistory(plate: entry.plate)
+                            }
                         } label: {
                             HStack(spacing: Theme.Spacing.m) {
-                                Image(systemName: "clock.arrow.circlepath")
+                                Image(systemName: isCompareMode
+                                      ? (compareSelection.contains(entry.plate)
+                                         ? "checkmark.circle.fill" : "circle")
+                                      : "clock.arrow.circlepath")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundStyle(Theme.Colors.primary)
                                 if let title = entry.title {
@@ -160,6 +213,19 @@ struct SearchView: View {
     }
 
     // MARK: - Helpers
+
+    /// Toggles a plate in the compare selection; picking the second one opens
+    /// the comparison sheet.
+    private func toggleCompareSelection(_ plate: Int) {
+        if let idx = compareSelection.firstIndex(of: plate) {
+            compareSelection.remove(at: idx)
+        } else {
+            compareSelection.append(plate)
+            if compareSelection.count == 2 {
+                comparePair = ComparePair(a: compareSelection[0], b: compareSelection[1])
+            }
+        }
+    }
 
     private func format(plate: Int) -> String { String(plate) }
 

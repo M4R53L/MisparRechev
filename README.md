@@ -13,12 +13,24 @@ live from Israel's **free, public, no-API-key** open-data portal
 - Enter a 7-digit plate → instant vehicle report.
 - Grouped, color-coded result cards:
   - **פרטים בסיסיים** — יצרן, דגם, שנת ייצור, צבע.
-  - **מפרט טכני** — סוג דלק, נפח מנוע, משקל, קבוצת זיהום (1–15).
+  - **מפרט טכני** — סוג דלק, הספק (כ״ס), נפח מנוע, תיבת הילוכים, הנעה, מרכב,
+    דלתות/מושבים, משקל, כושר גרירה, פליטת CO2, קבוצת זיהום (1–15).
+  - **בטיחות ומערכות סיוע** — כריות אוויר, ABS, בקרת יציבות, רמת אבזור
+    בטיחותי (0–8) ומערכות הסיוע המתקדמות שבדגם.
   - **רישוי ובדיקות** — תוקף טסט ורישיון עם סטטוס צבעוני (בתוקף / עומד לפוג / פג).
   - **היסטוריה ובעלות** — סוג בעלות, קילומטראז' אחרון, דגלי שינויים (צבע/מבנה/גוף/צמיג).
+  - **מחירון** — מחיר יבואן כחדש ושווי מוערך (מוסתייג).
+- **"הרכב שלי"** — pin your car: new-recall alerts and test-expiry reminders
+  (local notifications + BGAppRefresh), a status card on the search screen, a
+  home-screen **widget**, and a "בדיקת רכב" App Shortcut (Siri / Shortcuts).
+- **Deregistered check** — written-off plates (ביטול סופי) resolve with a red
+  "ירד מהכביש" banner + their last stored record, instead of "not found".
+- **Compare mode** — two plates side-by-side, from history or an open report.
+- **Offline snapshots** — every successful lookup is stored (up to 40); history
+  taps show instantly and revalidate in the background, and reports stay
+  readable offline with a "מוצג מידע שמור" note.
 - Search history of recently-looked-up plates.
-- Share / export a text summary of the report.
-- 24-hour local cache to respect rate limits (data refreshes ~daily).
+- Share a text summary, or export a one-page **vector PDF report**.
 - Dark-mode-ready, fully RTL, accessibility-conscious.
 
 ## Data sources (all free, no key — verified live against data.gov.il)
@@ -34,6 +46,10 @@ live from Israel's **free, public, no-API-key** open-data portal
 | Ownership-transfer timeline (2017+) — queried with `q` | `bb2355dc-9ec7-4f06-9c3f-3344672171da` |
 | Open (unperformed) recalls — queried with `filters`, UPPERCASE field | `36bf1404-0be4-49d2-82dc-2f1ead4a8b93` |
 | New-car importer list prices (1996+) — joined on model codes | `39f455bf-6db0-4926-859d-017f34eacbcb` |
+| Model spec sheet (hp, gearbox, safety systems) — joined on model codes | `142afde2-6228-49f9-8a29-9b6c3a0cbe40` |
+| Deregistered vehicles (ביטול סופי) — current era | `851ecab1-0622-4dbe-a6c7-f950cf82abf9` |
+| Deregistered vehicles — 2010–2016 | `4e6b9724-4c1e-43f0-909a-154d4cc4e046` |
+| Deregistered vehicles — 2000–2009 | `ec8cbc34-72e1-4b69-9c48-22821ba0bd6c` |
 
 The app tries the **primary** (active private/commercial) dataset first; on a
 not-found it queries the **fallback** datasets concurrently (public vehicles,
@@ -102,6 +118,36 @@ the new price (−15% first year, −10%/year after, floored at 5%) — clearly
 disclaimed, since the authoritative used-car guide (מחירון לוי יצחק) is
 proprietary with no public API; the app links out to it instead.
 
+The **model-spec** resource (`142afde2`, "מאגר דגמי רכב") is the per-model/
+trim/year spec sheet, joined on the **same four keys** as the price resource
+(normally exactly one record): `koah_sus` (הספק בכ״ס), `nefah_manoa` (נפח
+מנוע — note the spelling differs from the primary resource's `nefach_manoa`),
+`automatic_ind` (תיבת הילוכים), `hanaa_nm` (4X2/4X4), `merkav` (מרכב),
+`mispar_moshavim`/`mispar_dlatot`, `mishkal_kolel`, towing capacities
+(`kosher_grira_im_blamim`/`bli_blamim`, 0 = not rated), safety equipment
+(`mispar_kariot_avir`, `abs_ind`, `bakarat_yatzivut_ind`,
+`ramat_eivzur_betihuty` 0–8), `technologiat_hanaa_nm` ("הנעה רגילה" /
+"PLUG IN" / …) and ~19 driver-assist 0/1 flags (`bakarat_stiya_menativ_ind`,
+`bakarat_shyut_adaptivit_ind`, `matzlemat_reverse_ind`, …) which the app
+renders as chips in the בטיחות card. CO2 comes as complementary fields —
+old models have only `kamut_CO2` (NEDC-era), new ones only `CO2_WLTP` — and
+both are decoded as `Double` (this resource emits floats). `nikud_betihut`
+arrives as a float (e.g. `2.0`) and is deliberately **not** decoded. Vehicles
+from the fallback datasets lack `degem_cd`, so they have no spec — the extra
+rows and the safety card hide. Example: plate `5970065` → 160 כ״ס, ידנית,
+קבריולט, ‎181 g/km; plate `77720101` → 211 כ״ס, אוטומטית, היברידי נטען,
+7 כריות אוויר, ‎36 g/km (WLTP).
+
+The **deregistered** package ("כלי רכב שירדו מהכביש ובסטטוס ביטול סופי")
+holds vehicles whose registration was finally cancelled, in three era-split,
+filter-indexed resources (lowercase `mispar_rechev`, plate as a JSON string):
+`851ecab1…` (current era, ~1.2M records), `4e6b9724…` (2010–2016) and
+`ec8cbc34…` (2000–2009). Records carry near-full primary-style vehicle fields
+plus `bitul_dt` (cancellation timestamp, "2026-07-30 00:00:00") — the app
+queries them only after the primary and all fallbacks miss, and renders the
+hit as a normal report topped by a red "ירד מהכביש — ביטול סופי" banner.
+These records have no `sug_degem`, so the price/spec joins skip naturally.
+
 ## Build & run
 
 This repo uses [XcodeGen](https://github.com/yonaskolb/XcodeGen) so the
@@ -134,6 +180,15 @@ A free Apple ID is enough (7-day signature, 3-app limit). To persist your team
 across regenerations, add `DEVELOPMENT_TEAM: <your team id>` to the
 `MisparRechev` target settings in `project.yml`.
 
+The scheme also builds the embedded **widget extension**
+(`MisparRechevWidgets`). App ↔ widget data flows through the App Group
+`group.il.misparrechev.shared`; this normally provisions even on a free
+personal team, but if signing complains, delete the two `entitlements:` blocks
+in `project.yml` — the app falls back to standard `UserDefaults` and only the
+widget's data-sharing degrades (it shows its "הצמידו רכב" placeholder).
+Note: `Sources/*/Info.plist` and `*.entitlements` are **generated by XcodeGen**
+from `project.yml` (and gitignored) — never hand-edit them.
+
 > **Fallback (no XcodeGen):** In Xcode → File ▸ New ▸ Project ▸ iOS App
 > (Interface: SwiftUI, Language: Swift, bundle id `il.misparrechev.app`).
 > Set the development region to `he`, then drag the contents of
@@ -156,6 +211,9 @@ across regenerations, add `DEVELOPMENT_TEAM: <your team id>` to the
 - `5569379` — קיה RIO 2012 with an **open recall** (as of 2026-07) — shows the
   red recall-warning card. The dataset refreshes daily, so the recall may
   eventually be performed and the card disappear.
+- `1442562` — a 2007 Toyota that was **finally cancelled** (ביטול סופי,
+  2026-07-30). Missed by every active dataset, found in the deregistered one —
+  shows the red "ירד מהכביש" banner.
 - `0000000` — use to see the "not found" state.
 
 ## Run tests

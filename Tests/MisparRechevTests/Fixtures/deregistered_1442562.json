@@ -1,0 +1,96 @@
+{
+  "help": "https://data.gov.il/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "851ecab1-0622-4dbe-a6c7-f950cf82abf9",
+    "fields": [
+      {
+        "id": "mispar_rechev",
+        "type": "numeric"
+      },
+      {
+        "id": "tozeret_nm",
+        "type": "text"
+      },
+      {
+        "id": "degem_nm",
+        "type": "text"
+      },
+      {
+        "id": "sug_rechev_nm",
+        "type": "text"
+      },
+      {
+        "id": "moed_aliya_lakvish",
+        "type": "numeric"
+      },
+      {
+        "id": "bitul_dt",
+        "type": "text"
+      },
+      {
+        "id": "misgeret",
+        "type": "text"
+      },
+      {
+        "id": "mishkal_kolel",
+        "type": "numeric"
+      },
+      {
+        "id": "kvutzat_zihum",
+        "type": "numeric"
+      },
+      {
+        "id": "shnat_yitzur",
+        "type": "numeric"
+      },
+      {
+        "id": "baalut",
+        "type": "text"
+      },
+      {
+        "id": "tzeva_rechev",
+        "type": "text"
+      },
+      {
+        "id": "sug_delek_nm",
+        "type": "text"
+      },
+      {
+        "id": "kinuy_mishari",
+        "type": "text"
+      }
+    ],
+    "records": [
+      {
+        "_id": 1,
+        "mispar_rechev": 1442562,
+        "tozeret_cd": 672,
+        "tozeret_nm": "טויוטה צרפת",
+        "degem_cd": 31,
+        "degem_nm": "SCP90L-CHGGKW",
+        "sug_rechev_cd": 162,
+        "sug_rechev_nm": "פרטי נוסעים 5 דלתות",
+        "moed_aliya_lakvish": null,
+        "bitul_dt": "2026-07-30 00:00:00",
+        "misgeret": "VNKKL98377A100109",
+        "tozar_manoa": "טויוטה",
+        "degem_manoa": "2SZ",
+        "mispar_manoa": "D910108",
+        "mishkal_kolel": 1480,
+        "ramat_gimur": "SOL",
+        "ramat_eivzur_betihuty": 0,
+        "kvutzat_zihum": 0,
+        "shnat_yitzur": 2007,
+        "baalut": "פרטי",
+        "tzeva_rechev": "שנהב לבן",
+        "zmig_kidmi": "185/60R15",
+        "zmig_ahori": "185/60R15",
+        "sug_delek_nm": "גפמ\"",
+        "horaat_rishum": 0,
+        "kinuy_mishari": "YARIS"
+      }
+    ],
+    "total": 1
+  }
+}

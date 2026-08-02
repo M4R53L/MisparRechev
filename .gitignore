@@ -5,6 +5,11 @@
 
 # XcodeGen — the .xcodeproj is generated from project.yml, do not commit it
 MisparRechev.xcodeproj/
+# XcodeGen-generated Info.plist / entitlements (defined in project.yml)
+Sources/MisparRechev/Info.plist
+Sources/MisparRechev/MisparRechev.entitlements
+Sources/MisparRechevWidgets/Info.plist
+Sources/MisparRechevWidgets/MisparRechevWidgets.entitlements
 
 # Xcode
 xcuserdata/

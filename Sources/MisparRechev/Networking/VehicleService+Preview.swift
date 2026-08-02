@@ -35,7 +35,55 @@ extension Vehicle {
         tozeret_eretz_nm: nil,
         sug_yevu: nil,
         degem_manoa: nil,
-        mispar_manoa: nil
+        mispar_manoa: nil,
+        bitul_dt: nil
+    )
+}
+
+extension VehicleSpec {
+    /// Real model-spec record for plate `5970065` (מזדה MX-5, 2008) —
+    /// matches `Vehicle.preview`. A 2008 model: no driver-assist flags.
+    static let preview = VehicleSpec(
+        tozeret_cd: 588,
+        degem_cd: 12,
+        sug_degem: "P",
+        shnat_yitzur: 2008,
+        koah_sus: 160,
+        nefah_manoa: 1999,
+        mishkal_kolel: 1164,
+        hanaa_nm: "4X2",
+        automatic_ind: 0,
+        mispar_dlatot: 2,
+        mispar_moshavim: 2,
+        merkav: "קבריולט",
+        technologiat_hanaa_nm: "הנעה רגילה",
+        kamut_CO2: 181,
+        CO2_WLTP: nil,
+        mispar_kariot_avir: 4,
+        abs_ind: 1,
+        bakarat_yatzivut_ind: 1,
+        ramat_eivzur_betihuty: nil,
+        kosher_grira_im_blamim: 0,
+        kosher_grira_bli_blamim: 0,
+        bakarat_stiya_menativ_ind: 0,
+        bakarat_stiya_activ_s: 0,
+        nitur_merhak_milfanim_ind: 0,
+        zihuy_matzav_hitkarvut_mesukenet_ind: 0,
+        zihuy_beshetah_nistar_ind: 0,
+        bakarat_shyut_adaptivit_ind: 0,
+        zihuy_holchey_regel_ind: 0,
+        zihuy_rechev_do_galgali: 0,
+        zihuy_tamrurey_tnua_ind: 0,
+        maarechet_ezer_labalam_ind: 0,
+        blima_otomatit_nesia_leahor: 0,
+        blimat_hirum_lifnei_holhei_regel_ofanaim: 0,
+        hitnagshut_cad_shetah_met: 0,
+        matzlemat_reverse_ind: 0,
+        hayshaney_lahatz_avir_batzmigim_ind: 0,
+        hayshaney_hagorot_ind: 0,
+        teura_automatit_benesiya_kadima_ind: 0,
+        shlita_automatit_beorot_gvohim_ind: 0,
+        bakarat_mehirut_isa: 0
     )
 }
 

@@ -6,12 +6,46 @@ struct PollutionScale: View {
     let value: Int?     // 1...15
     let label: String   // default "קבוצת זיהום"
 
-    private let range: ClosedRange<Int> = 1...15
-
     init(value: Int?, label: String = "קבוצת זיהום") {
         self.value = value
         self.label = label
     }
+
+    var body: some View {
+        SegmentedScale(value: value, range: 1...15, label: label) { t in
+            // Hue: 0.33 (green) at the low end → 0.0 (red) at the high end.
+            Color(hue: 0.33 * (1 - t), saturation: 0.70, brightness: 0.88)
+        }
+    }
+}
+
+/// Horizontal 0–8 safety-equipment-level gauge (רמת אבזור בטיחותי).
+/// The inverse of the pollution scale: red at 0, green at 8.
+struct SafetyEquipmentScale: View {
+    let value: Int?     // 0...8
+    let label: String   // default "רמת אבזור בטיחותי"
+
+    init(value: Int?, label: String = "רמת אבזור בטיחותי") {
+        self.value = value
+        self.label = label
+    }
+
+    var body: some View {
+        SegmentedScale(value: value, range: 0...8, label: label) { t in
+            // Hue: 0.0 (red) at the low end → 0.33 (green) at the high end.
+            Color(hue: 0.33 * t, saturation: 0.70, brightness: 0.88)
+        }
+    }
+}
+
+/// Shared horizontal segmented gauge: one colored segment per value in
+/// `range`, filled up to the current value, with a marker above it. The
+/// color closure receives the segment's normalized position `t` (0...1).
+struct SegmentedScale: View {
+    let value: Int?
+    let range: ClosedRange<Int>
+    let label: String
+    let color: (Double) -> Color
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
@@ -45,6 +79,11 @@ struct PollutionScale: View {
         return "\(v) / \(range.upperBound)"
     }
 
+    /// Normalized position of a value within the range (0...1).
+    private func t(for i: Int) -> Double {
+        Double(i - range.lowerBound) / Double(max(range.upperBound - range.lowerBound, 1))
+    }
+
     // MARK: - Subviews
 
     private func scale(for v: Int) -> some View {
@@ -55,7 +94,7 @@ struct PollutionScale: View {
                 ForEach(range, id: \.self) { i in
                     let isActive = i <= v
                     RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(isActive ? color(for: i) : Theme.Colors.divider.opacity(0.5))
+                        .fill(isActive ? color(t(for: i)) : Theme.Colors.divider.opacity(0.5))
                         .frame(width: max(segmentWidth, 4), height: 12)
                 }
             }
@@ -75,20 +114,11 @@ struct PollutionScale: View {
         let count = CGFloat(range.count)
         let segmentWidth = (total - (count - 1) * 2) / count
         // The first segment in RTL sits at the right (leading).
-        // We place the marker at the center of segment index (v-1).
+        // We place the marker at the center of segment index (v - lowerBound).
         let indexFromLeading = CGFloat(v - range.lowerBound)
         let xFromLeading = indexFromLeading * (segmentWidth + 2) + segmentWidth / 2
         // Convert from leading (right) to view x (left) by negating and centering.
         return (xFromLeading - total / 2)
-    }
-
-    private func color(for i: Int) -> Color {
-        // Smooth hue from green (1) to red (15).
-        let t = Double(i - range.lowerBound) /
-                Double(range.upperBound - range.lowerBound)   // 0...1
-        // Hue: 0.33 (green) → 0.0 (red).
-        let hue = 0.33 * (1 - t)
-        return Color(hue: hue, saturation: 0.70, brightness: 0.88)
     }
 }
 
@@ -110,6 +140,11 @@ private struct Triangle: Shape {
         PollutionScale(value: 8)
         PollutionScale(value: 15)
         PollutionScale(value: nil)
+        Divider()
+        SafetyEquipmentScale(value: 0)
+        SafetyEquipmentScale(value: 2)
+        SafetyEquipmentScale(value: 8)
+        SafetyEquipmentScale(value: nil)
     }
     .padding()
     .background(Theme.Colors.background)

@@ -14,7 +14,7 @@ enum VehicleError: LocalizedError, Equatable {
         case .invalidPlate:
             return "מספר רישוי לא תקין. יש להזין 6–8 ספרות."
         case .notFound:
-            return "לא נמצא רכב עם מספר הרישוי שהוזן. המאגר מכסה כלי רכב פרטיים, מסחריים וציבוריים פעילים — לא אופנועים ולא רכב שירד מהכביש. ייתכן שהמספר שגוי."
+            return "לא נמצא רכב עם מספר הרישוי שהוזן — לא במאגרי הרכב הפעיל (פרטי, מסחרי, ציבורי, אופנועים, יבוא אישי) ולא במאגר כלי הרכב שירדו מהכביש. ייתכן שהמספר שגוי."
         case .network(let urlError):
             switch urlError.code {
             case .notConnectedToInternet, .networkConnectionLost:

@@ -13,7 +13,10 @@ final class LiveNetworkTests: XCTestCase {
         do {
             let result = try await service.lookup(plate: 5970065)
             XCTAssertEqual(result.vehicle.mispar_rechev, 5970065)
-            print("✅ LIVE primary OK: \(result.vehicle.tozeret_nm ?? "?") / \(result.vehicle.kinuy_mishari ?? "?") | mileage=\(result.mileage != nil) ownership=\(result.ownership.count)")
+            // The model-spec join (same four keys as prices) fills horsepower.
+            XCTAssertEqual(result.spec?.koah_sus, 160)
+            XCTAssertEqual(result.spec?.gearbox, "ידנית")
+            print("✅ LIVE primary OK: \(result.vehicle.tozeret_nm ?? "?") / \(result.vehicle.kinuy_mishari ?? "?") | hp=\(result.spec?.koah_sus.map(String.init) ?? "nil") mileage=\(result.mileage != nil) ownership=\(result.ownership.count)")
         } catch let error as VehicleError {
             try Self.handle(error)
         } catch {
@@ -127,6 +130,23 @@ final class LiveNetworkTests: XCTestCase {
         }
     }
 
+    /// Plate 1442562 was finally cancelled ("ביטול סופי") on 2026-07-30 — it
+    /// resolves from the deregistered datasets, after primary + fallbacks miss.
+    func testLiveLookupDeregisteredPlate1442562() async throws {
+        let service = VehicleService()
+        do {
+            let result = try await service.lookup(plate: 1442562)
+            XCTAssertEqual(result.vehicle.mispar_rechev, 1442562)
+            XCTAssertTrue(result.vehicle.isDeregistered)
+            XCTAssertNotNil(result.vehicle.bitul_dt)
+            print("✅ LIVE 1442562 deregistered OK: \(result.vehicle.tozeret_nm ?? "?") | bitul=\(result.vehicle.bitul_dt ?? "?")")
+        } catch let error as VehicleError {
+            try Self.handle(error)
+        } catch {
+            throw error
+        }
+    }
+
     /// A 9-digit "plate" matches nothing in any dataset → `.notFound`.
     func testLiveLookupNotFound() async throws {
         let service = VehicleService()
@@ -153,7 +173,7 @@ final class LiveNetworkTests: XCTestCase {
             try await Task.sleep(nanoseconds: 100_000_000)
         }
         switch vm.state {
-        case .loaded(let result):
+        case .loaded(let result, _):
             XCTAssertEqual(result.vehicle.mispar_rechev, 5970065)
             print("✅ VM end-to-end OK: \(result.vehicle.tozeret_nm ?? "?") | mileage=\(result.mileage != nil) ownership=\(result.ownership.count)")
         case .error(let error):
@@ -173,7 +193,7 @@ final class LiveNetworkTests: XCTestCase {
         for _ in 0..<150 where Self.isLoadingState(vm.state) {
             try await Task.sleep(nanoseconds: 100_000_000)
         }
-        guard case .loaded(let first) = vm.state else {
+        guard case .loaded(let first, _) = vm.state else {
             if case .error(let e) = vm.state { try Self.handle(e) }
             XCTFail("First lookup failed: \(vm.state)"); return
         }
@@ -186,7 +206,7 @@ final class LiveNetworkTests: XCTestCase {
             try await Task.sleep(nanoseconds: 100_000_000)
         }
         switch vm.state {
-        case .loaded(let second):
+        case .loaded(let second, _):
             XCTAssertEqual(second.vehicle.mispar_rechev, 3256880)
             XCTAssertFalse(second.ownership.isEmpty)
             print("✅ Two-lookup OK: 1st=\(v1.mispar_rechev), 2nd=\(second.vehicle.mispar_rechev) ownership=\(second.ownership.count) km=\(second.mileage?.mileageKm ?? "nil")")
