@@ -268,54 +268,9 @@ struct ResultView: View {
 
     // MARK: - Key facts
 
-    private struct Fact: Identifiable {
-        let label: String
-        let value: String
-        var unit: String? = nil
-        let systemImage: String
-        var id: String { label }
-    }
-
-    /// The facts a buyer scans first. Shown as one or two full rows of three,
-    /// never a ragged grid.
-    private var facts: [Fact] {
-        var all: [Fact] = []
-        if let year = vehicle.year {
-            all.append(Fact(label: "שנת ייצור", value: year, systemImage: "calendar"))
-        }
-        if let fuel = vehicle.sug_delek_nm?.trimmingCharacters(in: .whitespaces), !fuel.isEmpty {
-            all.append(Fact(label: "דלק", value: fuel,
-                            systemImage: fuel.contains("חשמל") ? "bolt.fill" : "fuelpump.fill"))
-        }
-        if let hp = spec?.horsepower {
-            all.append(Fact(label: "הספק", value: String(hp), unit: "כ״ס",
-                            systemImage: "gauge.with.needle.fill"))
-        }
-        if let gearbox = spec?.gearbox {
-            all.append(Fact(label: "תיבת הילוכים", value: gearbox,
-                            systemImage: "gearshift.layout.sixspeed"))
-        }
-        if let color = vehicle.tzeva_rechev?.trimmingCharacters(in: .whitespaces), !color.isEmpty {
-            all.append(Fact(label: "צבע", value: color, systemImage: "paintpalette.fill"))
-        }
-        if let km = mileage?.mileageKm {
-            all.append(Fact(label: "ק״מ בטסט אחרון", value: km, systemImage: "road.lanes"))
-        }
-        if let range = electricRangeKm {
-            all.append(Fact(label: "טווח חשמלי", value: String(range), unit: "ק״מ",
-                            systemImage: "battery.100percent"))
-        }
-        if let seats = spec?.seats {
-            all.append(Fact(label: "מושבים", value: String(seats), systemImage: "carseat.left.fill"))
-        }
-        if all.count >= 6 { return Array(all.prefix(6)) }
-        if all.count >= 3 { return Array(all.prefix(3)) }
-        return []
-    }
-
     @ViewBuilder
     private var keyFacts: some View {
-        let facts = self.facts
+        let facts = fullResult.headlineFacts
         if !facts.isEmpty {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.s),
                                      count: 3),

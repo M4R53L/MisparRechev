@@ -52,4 +52,23 @@ final class PDFReportRendererTests: XCTestCase {
         let byteCount = try Data(contentsOf: url).count
         XCTAssertGreaterThan(byteCount, 5_000, "non-trivial vector content")
     }
+
+    /// Set `PDF_PREVIEW_DIR` to a host folder to keep a copy of the rendered
+    /// report for visual review (the simulator can write to host paths).
+    func testExportsPreviewCopyWhenRequested() throws {
+        guard let dir = ProcessInfo.processInfo.environment["PDF_PREVIEW_DIR"] else {
+            throw XCTSkip("PDF_PREVIEW_DIR not set")
+        }
+        var result = try fullResult()
+        let price = try XCTUnwrap(
+            JSONDecoder().decode(DataGovResponse<NewCarPrice>.self,
+                                 from: fixture("price_77720101")).result?.records?.first)
+        result = LookupResult(vehicle: result.vehicle, spec: result.spec, mileage: result.mileage,
+                              ownership: result.ownership, recalls: result.recalls,
+                              prices: [price], electricRangeKm: nil)
+        let url = try PDFReportRenderer.render(result: result)
+        let target = URL(fileURLWithPath: dir).appendingPathComponent("report.pdf")
+        try? FileManager.default.removeItem(at: target)
+        try FileManager.default.copyItem(at: url, to: target)
+    }
 }
