@@ -87,7 +87,6 @@ struct SkeletonCard: View {
             RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
                 .fill(Theme.Colors.surface)
         )
-        .cardShadow()
     }
 }
 

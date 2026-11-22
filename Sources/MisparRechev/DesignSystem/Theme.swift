@@ -32,13 +32,17 @@ enum Theme {
         )
 
         /// System background. RootView uses this as the full-screen background.
-        static let background: Color = Color(.systemBackground)
+        static let background: Color = Color(.systemGroupedBackground)
 
-        /// Card / grouped surface.
-        static let surface: Color = Color(.secondarySystemBackground)
+        /// Card / grouped surface (white on the grouped background in light mode).
+        static let surface: Color = Color(.secondarySystemGroupedBackground)
 
         /// Slightly elevated surface (sheets, popovers).
-        static let surfaceElevated: Color = Color(.tertiarySystemBackground)
+        static let surfaceElevated: Color = Color(.tertiarySystemGroupedBackground)
+
+        /// The blue band on the left edge of an Israeli plate. Same in both
+        /// modes: it is a physical object, not interface chrome.
+        static let plateStrip: Color = .init(hex: 0x1B4AA0)
 
         // Text
         static let textPrimary: Color   = Color(.label)
@@ -68,8 +72,8 @@ enum Theme {
         static let divider: Color = Color(.separator)
 
         /// Subtle card shadow.
-        static let cardShadow: Color = .init(light: .black.opacity(0.06),
-                                             dark:  .black.opacity(0.30))
+        static let cardShadow: Color = .init(light: .black.opacity(0.10),
+                                             dark:  .black.opacity(0.35))
     }
 
     // MARK: Motion
@@ -100,27 +104,34 @@ enum Theme {
     }
 
     // MARK: Typography
+    /// All tokens are built on text styles so they follow Dynamic Type.
     enum Typography {
-        static let largeTitle:  Font = .system(size: 34, weight: .bold,         design: .default)
-        static let title:       Font = .system(size: 24, weight: .bold,         design: .default)
-        static let headline:    Font = .system(size: 18, weight: .semibold,     design: .default)
-        static let body:        Font = .system(size: 16, weight: .regular,      design: .default)
-        static let bodyBold:    Font = .system(size: 16, weight: .semibold,     design: .default)
-        static let caption:     Font = .system(size: 13, weight: .regular,      design: .default)
-        static let captionBold: Font = .system(size: 13, weight: .semibold,     design: .default)
-        static let monoValue:   Font = .system(size: 15, weight: .medium,       design: .monospaced)
+        static let largeTitle:  Font = .system(.largeTitle, weight: .bold)
+        static let title:       Font = .system(.title2, weight: .bold)
+        static let headline:    Font = .system(.headline, weight: .semibold)
+        static let body:        Font = .system(.callout)
+        static let bodyBold:    Font = .system(.callout, weight: .semibold)
+        static let caption:     Font = .system(.footnote)
+        static let captionBold: Font = .system(.footnote, weight: .semibold)
+        /// Numeric values: proportional face with tabular digits (identifiers
+        /// such as VINs stay readable without switching to a mono face).
+        static let monoValue:   Font = .system(.callout, weight: .semibold).monospacedDigit()
 
-        /// Special font for the yellow plate: large, rounded, monospaced.
+        /// The stamped plate digits: heavy, rounded, tabular.
         static let plate:       Font = .system(size: 30, weight: .heavy,
                                                 design: .rounded).monospacedDigit()
+        /// Large figures in fact tiles and status rows.
+        static let figure:      Font = .system(.title3, design: .rounded, weight: .bold)
+                                            .monospacedDigit()
     }
 }
 
 // MARK: - Shadow helper
 extension View {
-    /// Standard soft card shadow.
+    /// Shadow for physical objects only (the plate, floating notices).
+    /// Grouped surfaces sit flat on the background and take no shadow.
     func cardShadow() -> some View {
         self.shadow(color: Theme.Colors.cardShadow,
-                    radius: 8, x: 0, y: 2)
+                    radius: 6, x: 0, y: 2)
     }
 }

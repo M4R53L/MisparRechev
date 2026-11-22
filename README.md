@@ -237,9 +237,9 @@ from `project.yml` (and gitignored) — never hand-edit them.
   exercises the **public-vehicles fallback** path.
 - `1234567` — אלפא רומיאו 159, 2009 (was a Corolla in older docs; the plate was
   re-registered). New-car list price resolves to ₪190,990.
-- `5569379` — קיה RIO 2012 with an **open recall** (as of 2026-07) — shows the
-  red recall-warning card. The dataset refreshes daily, so the recall may
-  eventually be performed and the card disappear.
+- `94230401` — has an **open recall** (as of 2026-11) and shows the red
+  recall-warning card. The dataset refreshes daily and a recall disappears once
+  performed: `5569379` (קיה RIO 2012), the earlier example, no longer has one.
 - `1442562` — a 2007 Toyota that was **finally cancelled** (ביטול סופי,
   2026-07-30). Missed by every active dataset, found in the deregistered one —
   shows the red "ירד מהכביש" banner.

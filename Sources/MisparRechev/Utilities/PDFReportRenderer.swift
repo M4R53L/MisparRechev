@@ -12,8 +12,12 @@ enum PDFReportRenderer {
     ///
     /// The RTL/Hebrew/light environment is applied to the rendered content
     /// itself — `ImageRenderer` does not inherit the app's environment.
-    static func render(result: LookupResult, generatedAt: Date = .now) throws -> URL {
-        let content = PDFReportView(result: result, generatedAt: generatedAt)
+    static func render(result: LookupResult,
+                       manualValue: Int? = nil,
+                       generatedAt: Date = .now) throws -> URL {
+        let content = PDFReportView(result: result,
+                                    manualValue: manualValue,
+                                    generatedAt: generatedAt)
             .environment(\.layoutDirection, .rightToLeft)
             .environment(\.locale, Locale(identifier: "he_IL"))
             .environment(\.colorScheme, .light)

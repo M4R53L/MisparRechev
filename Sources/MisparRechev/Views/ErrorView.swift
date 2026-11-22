@@ -35,50 +35,28 @@ struct ErrorView: View {
     // MARK: - Subviews
 
     private var illustration: some View {
-        ZStack {
-            Circle()
-                .fill(tint.opacity(0.15))
-                .frame(width: 140, height: 140)
-            Image(systemName: symbolName)
-                .font(.system(size: 64, weight: .semibold))
-                .foregroundStyle(tint)
-                .symbolRenderingMode(.hierarchical)
-                .accessibilityHidden(true)
-        }
+        Image(systemName: symbolName)
+            .font(.system(size: 56, weight: .semibold))
+            .foregroundStyle(tint)
+            .symbolRenderingMode(.hierarchical)
+            .accessibilityHidden(true)
     }
 
     private var actions: some View {
-        VStack(spacing: Theme.Spacing.s) {
+        VStack(spacing: Theme.Spacing.m) {
             Button {
                 viewModel.search()
             } label: {
-                HStack(spacing: Theme.Spacing.s) {
-                    Image(systemName: "arrow.clockwise")
-                    Text("נסה שוב")
-                }
-                .font(Theme.Typography.headline)
-                .foregroundStyle(Theme.Colors.textOnPrimary)
-                .frame(maxWidth: .infinity, minHeight: 50)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
-                        .fill(Theme.Colors.primary)
-                )
+                Label("ניסיון נוסף", systemImage: "arrow.clockwise")
             }
+            .buttonStyle(PrimaryButtonStyle())
             .disabled(!viewModel.canSearch)
             .accessibilityHint("מנסה שוב את אותו החיפוש")
 
-            Button {
+            Button("חיפוש חדש") {
                 viewModel.reset()
-            } label: {
-                Text("חיפוש חדש")
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(Theme.Colors.primary)
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
-                            .strokeBorder(Theme.Colors.primary, lineWidth: 1.5)
-                    )
             }
+            .buttonStyle(SecondaryButtonStyle())
             .accessibilityHint("חוזר למסך החיפוש הראשי")
         }
         .padding(.top, Theme.Spacing.m)

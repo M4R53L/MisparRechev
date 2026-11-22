@@ -80,12 +80,11 @@ final class CompareMetricsTests: XCTestCase {
     func testPriceRowsUseFormattedShekels() throws {
         let rows = CompareMetrics.rows(a: try mx5(), b: try c300e())
 
-        // MX-5 has no price record → both price rows nil on side A.
-        XCTAssertNil(try value(rows, "מחיר מחירון כחדש").a)
-        XCTAssertNil(try value(rows, "שווי מוערך").a)
+        // The as-new list price isn't shown at all — only the current value.
+        XCTAssertNil(rows.first { $0.label.contains("כחדש") })
 
-        XCTAssertEqual(try value(rows, "מחיר מחירון כחדש").b,
-                       PriceEstimator.formatted(375900))
+        // MX-5 has no price record → no estimate on side A.
+        XCTAssertNil(try value(rows, "שווי מוערך").a)
         XCTAssertNotNil(try value(rows, "שווי מוערך").b,
                         "single price + year → estimate present")
     }

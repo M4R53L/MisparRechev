@@ -108,7 +108,7 @@ final class MyCarRefresher {
             let content = UNMutableNotificationContent()
             content.title = "תוקף הטסט מתקרב"
             content.body = reminder.daysBefore == 0
-                ? "הטסט של \(title) פג היום — זכרו לחדש"
+                ? "הטסט של \(title) פג היום. זכרו לחדש"
                 : "הטסט של \(title) יפוג בעוד \(reminder.daysBefore) ימים"
             content.sound = .default
             let trigger = UNCalendarNotificationTrigger(dateMatching: reminder.components,
@@ -127,7 +127,7 @@ final class MyCarRefresher {
         content.title = "ריקול חדש לרכב שלך"
         let what = [recall.category, recall.details].compactMap { $0 }.joined(separator: " — ")
         content.body = what.isEmpty
-            ? "נפתחה קריאת שירות לרכב \(plate) — פרטים אצל היבואן"
+            ? "נפתחה קריאת שירות לרכב \(plate). פרטים אצל היבואן"
             : what
         content.sound = .default
         let identifier = "myCar.recall.\(recall.RECALL_ID ?? plate)"

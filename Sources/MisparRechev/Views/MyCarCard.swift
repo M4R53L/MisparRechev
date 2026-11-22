@@ -12,8 +12,8 @@ struct MyCarCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.m) {
                 HStack(spacing: Theme.Spacing.s) {
                     Image(systemName: "star.fill")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.primary)
+                        .font(.system(.subheadline, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.plateYellow)
                         .accessibilityHidden(true)
                     Text("הרכב שלי")
                         .font(Theme.Typography.headline)
@@ -27,20 +27,7 @@ struct MyCarCard: View {
                 }
 
                 HStack(spacing: Theme.Spacing.m) {
-                    Text(String(car.plate))
-                        .font(.system(size: 15, weight: .heavy, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.Colors.textOnPlate)
-                        .padding(.horizontal, Theme.Spacing.m)
-                        .padding(.vertical, Theme.Spacing.xs)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
-                                .fill(Theme.Colors.plateYellow)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
-                                .strokeBorder(Theme.Colors.plateBorder, lineWidth: 1.5)
-                        )
+                    PlateView(number: String(car.plate), size: .compact)
                     Text(car.title)
                         .font(Theme.Typography.bodyBold)
                         .foregroundStyle(Theme.Colors.textPrimary)
@@ -63,9 +50,6 @@ struct MyCarCard: View {
                         .font(.system(size: 13, weight: .semibold))
                     Text(recallsText)
                         .font(Theme.Typography.captionBold)
-                    Text("· נכון לעדכון האחרון")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.textTertiary)
                 }
                 .foregroundStyle(car.knownRecallIDs.isEmpty
                                  ? Theme.Colors.success : Theme.Colors.danger)
@@ -77,11 +61,6 @@ struct MyCarCard: View {
                 RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
                     .fill(Theme.Colors.surface)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
-                    .strokeBorder(Theme.Colors.divider.opacity(0.5), lineWidth: 0.5)
-            )
-            .cardShadow()
         }
         .buttonStyle(.plain)
         .accessibilityLabel("הרכב שלי: \(car.title)")

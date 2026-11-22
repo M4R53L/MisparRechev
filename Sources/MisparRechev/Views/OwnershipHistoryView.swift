@@ -10,7 +10,7 @@ struct OwnershipHistoryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             if !ownership.isEmpty {
-                Text("היסטוריית בעלות · \(ownership.count) רשומות")
+                Text("היסטוריית בעלות, \(ownership.count) רשומות")
                     .font(Theme.Typography.captionBold)
                     .foregroundStyle(Theme.Colors.textSecondary)
 
@@ -46,7 +46,7 @@ struct OwnershipHistoryView: View {
     private func ownershipRow(_ rec: OwnershipRecord, endDate: Int?, isLast: Bool) -> some View {
         let start = SearchViewModel.displayMonthYear(rec.baalut_dt) ?? "—"
         let rangeText: String = {
-            if isLast { return "מ\(start) • נוכחי" }
+            if isLast { return "מ\(start), בעלים נוכחי" }
             let end = SearchViewModel.displayMonthYear(endDate) ?? "—"
             return "מ\(start) עד \(end)"
         }()

@@ -34,13 +34,6 @@ enum CompareMetrics {
         rows.append(make("קבוצת זיהום") { $0.vehicle.kvutzat_zihum.map { "\($0) / 15" } })
         rows.append(make("כריות אוויר") { $0.spec?.airbagCount.map(String.init) })
         rows.append(make("פליטת CO2") { $0.spec?.co2Display })
-        rows.append(make("מחיר מחירון כחדש") { result in
-            let amounts = result.prices.compactMap(\.mehir).filter { $0 > 0 }
-            guard let min = amounts.min(), let max = amounts.max() else { return nil }
-            return min == max
-                ? PriceEstimator.formatted(min)
-                : "\(PriceEstimator.formatted(min))–\(PriceEstimator.formatted(max))"
-        })
         rows.append(make("שווי מוערך") { result in
             guard result.prices.count == 1,
                   let newPrice = result.prices.first?.mehir,
@@ -189,7 +182,6 @@ struct CompareView: View {
             RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
                 .strokeBorder(Theme.Colors.divider.opacity(0.5), lineWidth: 0.5)
         )
-        .cardShadow()
     }
 
     private func valueCell(_ text: String?) -> some View {
@@ -325,7 +317,6 @@ struct CompareFromResultSheet: View {
                         RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
                             .strokeBorder(Theme.Colors.divider.opacity(0.5), lineWidth: 0.5)
                     )
-                    .cardShadow()
                 }
             }
             .padding(.horizontal, Theme.Spacing.l)

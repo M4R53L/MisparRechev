@@ -216,7 +216,7 @@ final class SearchViewModel {
         guard case .loaded(let result, _) = state else { return }
         let vehicle = result.vehicle
         let title = [vehicle.model ?? vehicle.manufacturer, vehicle.year]
-            .compactMap { $0 }.joined(separator: " • ")
+            .compactMap { $0 }.joined(separator: ", ")
         myCar = myCar.pinning(
             plate: vehicle.mispar_rechev,
             title: title.isEmpty ? String(vehicle.mispar_rechev) : title,

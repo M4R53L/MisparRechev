@@ -1,0 +1,4 @@
+/* Hebrew names shown on the Home Screen and in Settings. */
+"CFBundleDisplayName" = "מספר רכב";
+"CFBundleName" = "מספר רכב";
+"NSCameraUsageDescription" = "המצלמה משמשת לסריקת לוחית הרישוי כדי למלא את מספר הרכב אוטומטית";

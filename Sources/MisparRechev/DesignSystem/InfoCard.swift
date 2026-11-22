@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Grouped card container used by `ResultView` to hold related info rows.
+/// A titled group of related rows: the title sits on the page background,
+/// the rows on one flat surface (the iOS grouped-list idiom).
 struct InfoCard<Content: View>: View {
     let title: String
     /// Optional SF Symbol shown next to the title.
@@ -8,45 +9,39 @@ struct InfoCard<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(spacing: Theme.Spacing.s) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.primary)
+                        .font(.system(.subheadline, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.textSecondary)
                         .accessibilityHidden(true)
                 }
                 Text(title)
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.textPrimary)
-                    .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.bottom, Theme.Spacing.xs)
+            .padding(.horizontal, Theme.Spacing.xs)
+            .accessibilityAddTraits(.isHeader)
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
                 content()
             }
+            .padding(Theme.Spacing.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
+                    .fill(Theme.Colors.surface)
+            )
         }
-        .padding(Theme.Spacing.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
-                .fill(Theme.Colors.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
-                .strokeBorder(Theme.Colors.divider.opacity(0.5), lineWidth: 0.5)
-        )
-        .cardShadow()
     }
 }
 
 #Preview {
-    InfoCard(title: "פרטים בסיסיים", systemImage: "car.fill") {
-        Text("גוף התוכן כאן")
-            .font(Theme.Typography.body)
-            .foregroundStyle(Theme.Colors.textSecondary)
+    InfoCard(title: "הרכב", systemImage: "car.fill") {
+        InfoRow(label: "יצרן", value: "מזדה")
+        InfoRow(label: "רמת גימור", value: "S")
     }
     .padding()
     .background(Theme.Colors.background)

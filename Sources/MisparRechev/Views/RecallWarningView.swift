@@ -45,12 +45,11 @@ struct RecallWarningView: View {
             RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
                 .strokeBorder(Theme.Colors.danger, lineWidth: 1)
         )
-        .cardShadow()
         .accessibilityElement(children: .combine)
     }
 
     private var title: String {
-        recalls.count > 1 ? "ריקולים פתוחים · \(recalls.count)" : "ריקול פתוח"
+        recalls.count > 1 ? "\(recalls.count) ריקולים פתוחים" : "ריקול פתוח"
     }
 
     @ViewBuilder

@@ -7,8 +7,8 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.1"
+    CURRENT_PROJECT_VERSION: "2"
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_LANGUAGE: he
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -18,6 +18,21 @@ settings:
     # honours per-view layoutDirection). Comment out to follow device language.
     INFOPLIST_KEY_UIForceRTL: YES
     INFOPLIST_KEY_NSCameraUsageDescription: "המצלמה משמשת לסריקת לוחית הרישוי כדי למלא את מספר הרכב אוטומטית"
+
+schemes:
+  MisparRechev:
+    build:
+      targets:
+        MisparRechev: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MisparRechevTests
+        - MisparRechevUITests
+    archive:
+      config: Release
 
 targets:
   MisparRechev:
@@ -39,6 +54,9 @@ targets:
       properties:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleIconName: AppIcon
+        # HTTPS-only (exempt) — skips the export-compliance question on upload.
+        ITSAppUsesNonExemptEncryption: false
         BGTaskSchedulerPermittedIdentifiers:
           - il.misparrechev.app.refresh
         UIBackgroundModes:
@@ -102,3 +120,18 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: il.misparrechev.tests
         GENERATE_INFOPLIST_FILE: YES
+
+  # Drives the real app to capture App Store screenshots (not part of CI-style
+  # correctness testing — run with -only-testing:MisparRechevUITests).
+  MisparRechevUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Tests/MisparRechevUITests
+    dependencies:
+      - target: MisparRechev
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: il.misparrechev.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: MisparRechev

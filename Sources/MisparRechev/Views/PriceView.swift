@@ -1,24 +1,33 @@
 import SwiftUI
 
 /// "מחירון" card: official importer list price for the model as new, a rough
-/// current-value estimate (clearly disclaimed), the importer name, and a link
-/// out to Levi Yitzhak for an authoritative used-car valuation.
+/// current-value estimate (clearly disclaimed) that the user can overwrite with
+/// a real valuation, the importer name, and a link out to Levi Yitzhak for an
+/// authoritative used-car valuation.
 struct PriceView: View {
     let prices: [NewCarPrice]
     let vehicle: Vehicle
+    /// Manually entered current value (persisted by the caller). `nil` → show
+    /// the automatic depreciation estimate.
+    @Binding var manualValue: Int?
+
+    @State private var isEditing = false
+    @State private var draft = ""
 
     var body: some View {
         InfoCard(title: "מחירון", systemImage: "shekelsign.circle.fill") {
-            InfoRow(label: newPriceLabel, value: newPriceText, monospaced: true)
-
-            if let estimate = estimatedValue {
-                InfoRow(label: "שווי מוערך כיום",
-                        value: PriceEstimator.formatted(estimate),
+            if let value = displayedValue {
+                InfoRow(label: manualValue == nil ? "שווי מוערך כיום" : "שווי מעודכן (הוזן ידנית)",
+                        value: PriceEstimator.formatted(value),
                         monospaced: true)
-                Text("הערכה גסה לפי פחת ממוצע בלבד — אינה תחליף למחירון מקצועי")
+                Text(manualValue == nil
+                     ? "הערכה גסה לפי פחת ממוצע בלבד. אינה תחליף למחירון מקצועי"
+                     : "הוזן ידנית על־פי מחירון חיצוני. מופיע גם בשיתוף ובדוח ה־PDF")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.textTertiary)
             }
+
+            editControls
 
             if prices.count == 1, let importer = prices.first?.importer {
                 InfoRow(label: "יבואן", value: importer)
@@ -27,22 +36,61 @@ struct PriceView: View {
             leviYitzhakLink
                 .padding(.top, Theme.Spacing.s)
         }
+        .alert("עדכון שווי הרכב", isPresented: $isEditing) {
+            TextField("שווי בשקלים", text: $draft)
+                .keyboardType(.numberPad)
+            Button("שמירה") { commitDraft() }
+            Button("ביטול", role: .cancel) {}
+        } message: {
+            Text("הזן את השווי שמצאת במחירון (לוי יצחק). השווי יישמר לרכב זה ויופיע בדוח ה־PDF ובשיתוף.")
+        }
+    }
+
+    // MARK: - Editing
+
+    private var editControls: some View {
+        HStack(spacing: Theme.Spacing.l) {
+            Button {
+                draft = displayedValue.map(String.init) ?? ""
+                isEditing = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "square.and.pencil")
+                    Text(displayedValue == nil ? "הזנת שווי מהמחירון" : "עריכת השווי")
+                }
+            }
+            .accessibilityLabel("עריכת שווי הרכב")
+
+            if manualValue != nil {
+                Button {
+                    manualValue = nil
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.counterclockwise")
+                        Text("חזרה לאומדן")
+                    }
+                }
+                .accessibilityLabel("איפוס לאומדן האוטומטי")
+            }
+
+            Spacer(minLength: 0)
+        }
+        .font(Theme.Typography.captionBold)
+        .foregroundStyle(Theme.Colors.primary)
+        .padding(.top, 2)
+    }
+
+    /// Digits only — Hebrew keyboards and pasted text may bring separators.
+    private func commitDraft() {
+        let digits = draft.filter(\.isNumber)
+        manualValue = Int(digits).flatMap { $0 > 0 ? $0 : nil }
     }
 
     // MARK: - Values
 
-    private var newPriceLabel: String {
-        if let year = vehicle.year { return "מחיר מחירון כחדש (\(year))" }
-        return "מחיר מחירון כחדש"
-    }
-
-    /// Single record → its price; multiple → "min–max" range.
-    private var newPriceText: String? {
-        let amounts = prices.compactMap(\.mehir).filter { $0 > 0 }
-        guard let min = amounts.min(), let max = amounts.max() else { return nil }
-        return min == max
-            ? PriceEstimator.formatted(min)
-            : "\(PriceEstimator.formatted(min))–\(PriceEstimator.formatted(max))"
+    /// The manual value when set, else the automatic estimate.
+    private var displayedValue: Int? {
+        manualValue ?? estimatedValue
     }
 
     /// Estimate only for the unambiguous single-record case.
@@ -66,14 +114,14 @@ struct PriceView: View {
         Link(destination: Self.leviYitzhakAppURL) {
             HStack(spacing: Theme.Spacing.s) {
                 Image(systemName: "arrow.up.forward.app")
-                Text("בדיקת שווי מדויק — מחירון לוי יצחק")
+                Text("בדיקת שווי מדויק במחירון לוי יצחק")
             }
             .font(Theme.Typography.captionBold)
             .foregroundStyle(Theme.Colors.primary)
             .frame(maxWidth: .infinity, minHeight: 40)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
-                    .strokeBorder(Theme.Colors.primary, lineWidth: 1)
+                    .fill(Theme.Colors.primary.opacity(0.12))
             )
         }
         .accessibilityLabel("פתיחת אפליקציית מחירון לוי יצחק")
@@ -81,7 +129,8 @@ struct PriceView: View {
 }
 
 #Preview {
-    PriceView(prices: [.preview], vehicle: .preview)
+    @Previewable @State var manualValue: Int? = nil
+    PriceView(prices: [.preview], vehicle: .preview, manualValue: $manualValue)
         .padding()
         .background(Theme.Colors.background)
         .environment(\.layoutDirection, .rightToLeft)

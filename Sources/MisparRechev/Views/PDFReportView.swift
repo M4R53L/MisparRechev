@@ -7,6 +7,9 @@ struct PDFReportView: View {
     static let pageWidth: CGFloat = 595
 
     let result: LookupResult
+    /// User-entered current value (from `PriceOverrideStore`); when set it
+    /// replaces the automatic depreciation estimate in the price section.
+    var manualValue: Int? = nil
     /// The date stamped in the footer (injectable for deterministic tests).
     var generatedAt: Date = .now
 
@@ -243,32 +246,26 @@ struct PDFReportView: View {
 
     @ViewBuilder
     private var priceSection: some View {
-        let amounts = result.prices.compactMap(\.mehir).filter { $0 > 0 }
-        let listPrice: String? = {
-            guard let min = amounts.min(), let max = amounts.max() else { return nil }
-            return min == max
-                ? PriceEstimator.formatted(min)
-                : "\(PriceEstimator.formatted(min))–\(PriceEstimator.formatted(max))"
-        }()
-        let estimate: String? = {
+        let autoEstimate: Int? = {
             guard result.prices.count == 1,
                   let newPrice = result.prices.first?.mehir,
-                  let year = vehicle.shnat_yitzur,
-                  let value = PriceEstimator.estimatedValue(newPrice: newPrice,
-                                                           productionYear: year)
+                  let year = vehicle.shnat_yitzur
             else { return nil }
-            return PriceEstimator.formatted(value)
+            return PriceEstimator.estimatedValue(newPrice: newPrice, productionYear: year)
         }()
+        let value = manualValue ?? autoEstimate
         let rows = compact([
-            ("מחיר מחירון כחדש", listPrice),
-            ("שווי מוערך כיום", estimate),
+            (manualValue == nil ? "שווי מוערך כיום" : "שווי מעודכן (הוזן ידנית)",
+             value.map(PriceEstimator.formatted)),
             ("יבואן", result.prices.count == 1 ? result.prices.first?.importer : nil)
         ])
         if !rows.isEmpty {
             VStack(alignment: .leading, spacing: 5) {
                 section("מחירון", rows: rows)
-                if estimate != nil {
-                    Text("השווי המוערך הוא אומדן גס לפי פחת ממוצע בלבד — אינו תחליף למחירון מקצועי")
+                if value != nil {
+                    Text(manualValue == nil
+                         ? "השווי המוערך הוא אומדן גס לפי פחת ממוצע בלבד — אינו תחליף למחירון מקצועי"
+                         : "השווי המעודכן הוזן ידנית על־פי מחירון חיצוני")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                 }

@@ -13,7 +13,7 @@ struct DeregisteredBannerView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Theme.Colors.danger)
                     .accessibilityHidden(true)
-                Text("ירד מהכביש — ביטול סופי")
+                Text("ירד מהכביש (ביטול סופי)")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.danger)
                     .multilineTextAlignment(.leading)
@@ -39,7 +39,6 @@ struct DeregisteredBannerView: View {
             RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
                 .strokeBorder(Theme.Colors.danger, lineWidth: 1)
         )
-        .cardShadow()
         .accessibilityElement(children: .combine)
     }
 }
